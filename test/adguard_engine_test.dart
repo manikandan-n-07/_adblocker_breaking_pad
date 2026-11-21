@@ -108,8 +108,13 @@ void main() {
       expect(res2.category, equals(FilterCategory.youtube));
     });
 
-    test('Does NOT block legitimate non-ad websites', () {
+    test('Does NOT block legitimate non-ad websites and search engines', () {
       expect(networkFilter.shouldBlockUrl('https://www.google.com').isBlocked, isFalse);
+      expect(networkFilter.shouldBlockUrl('https://www.google.com/search?q=flutter').isBlocked, isFalse);
+      expect(networkFilter.shouldBlockUrl('https://duckduckgo.com/?q=flutter').isBlocked, isFalse);
+      expect(networkFilter.shouldBlockUrl('https://www.bing.com/search?q=flutter').isBlocked, isFalse);
+      expect(networkFilter.shouldBlockUrl('https://search.brave.com/search?q=flutter').isBlocked, isFalse);
+      expect(networkFilter.shouldBlockUrl('https://www.ecosia.org/search?q=flutter').isBlocked, isFalse);
       expect(networkFilter.shouldBlockUrl('https://en.wikipedia.org/wiki/Flutter').isBlocked, isFalse);
       expect(networkFilter.shouldBlockUrl('https://github.com/flutter/flutter').isBlocked, isFalse);
     });

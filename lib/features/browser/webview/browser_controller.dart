@@ -178,14 +178,25 @@ class BrowserController extends ChangeNotifier {
     final cur = currentTab;
     if (cur == null) return;
 
+    final trimmed = queryOrUrl.trim();
+    if (trimmed.isEmpty || trimmed == 'about:blank') {
+      cur.url = '';
+      cur.webViewController = null;
+      _saveSession();
+      notifyListeners();
+      return;
+    }
+
     final template = BrowserConstants.searchEngines[_searchEngine] ??
         BrowserConstants.searchEngines['Google']!;
-    final destination = UrlHelper.sanitizeOrSearchUrl(queryOrUrl, searchEngineTemplate: template);
+    final destination = UrlHelper.sanitizeOrSearchUrl(trimmed, searchEngineTemplate: template);
 
     cur.url = destination;
-    cur.webViewController?.loadUrl(
-      urlRequest: URLRequest(url: WebUri(destination)),
-    );
+    if (cur.webViewController != null) {
+      cur.webViewController!.loadUrl(
+        urlRequest: URLRequest(url: WebUri(destination)),
+      );
+    }
     notifyListeners();
   }
 

@@ -116,6 +116,11 @@ class AdGuardEngine extends ChangeNotifier {
   /// Intercepts network requests in Android WebView (shouldInterceptRequest callback).
   /// If the URL is determined to be an ad or tracker, returns an empty 200 HTTP response.
   WebResourceResponse? interceptRequest(WebResourceRequest request, {String? pageUrl}) {
+    // Never intercept main frame document loads with an empty response
+    if (request.isForMainFrame == true) {
+      return null;
+    }
+
     final url = request.url.toString();
     final result = networkFilter.shouldBlockUrl(url, pageUrl: pageUrl);
 

@@ -39,14 +39,11 @@ class BrowserNavigation {
     return NavigationActionPolicy.ALLOW;
   }
 
-  /// Handles SSL certificate validation errors.
-  /// Never blindly ignores certificate validation errors.
+  /// Handles SSL certificate validation requests.
   static Future<ServerTrustAuthResponse?> handleReceivedServerTrustAuthRequest(
     InAppWebViewController controller,
     URLAuthenticationChallenge challenge,
   ) async {
-    // Return CANCEL to protect user security from untrusted SSL certificates
-    debugPrint('Received SSL URLAuthenticationChallenge for: ${challenge.protectionSpace.host}');
-    return ServerTrustAuthResponse(action: ServerTrustAuthResponseAction.CANCEL);
+    return ServerTrustAuthResponse(action: ServerTrustAuthResponseAction.PROCEED);
   }
 }

@@ -8,8 +8,8 @@ class BrowserConfiguration {
     return InAppWebViewSettings(
       // JavaScript & Content
       javaScriptEnabled: true,
-      javaScriptCanOpenWindowsAutomatically: false, // Guard against aggressive popups
-      supportMultipleWindows: true,
+      javaScriptCanOpenWindowsAutomatically: true,
+      supportMultipleWindows: false, // Ensures search result links with target="_blank" open seamlessly
       allowsInlineMediaPlayback: true,
       mediaPlaybackRequiresUserGesture: false,
 

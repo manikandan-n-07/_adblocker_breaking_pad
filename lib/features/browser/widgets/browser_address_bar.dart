@@ -62,8 +62,8 @@ class _BrowserAddressBarState extends State<BrowserAddressBar> {
   }
 
   void _submit() {
-    _focusNode.unfocus();
     final text = _textController.text.trim();
+    _focusNode.unfocus();
     if (text.isNotEmpty) {
       widget.onNavigate(text);
     }

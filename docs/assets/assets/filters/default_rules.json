@@ -1,0 +1,146 @@
+{
+  "version": "2.0.0",
+  "updatedAt": "2026-11-21T00:00:00Z",
+  "categories": {
+    "ads": {
+      "name": "Advertising Filters",
+      "enabled": true,
+      "domains": [
+        "doubleclick.net","googlesyndication.com","googleadservices.com",
+        "adservice.google.com","adnxs.com","taboola.com","outbrain.com",
+        "criteo.com","pubmatic.com","rubiconproject.com","openx.net",
+        "smartadserver.com","casalemedia.com","bidswitch.net","moatads.com",
+        "serving-sys.com","advertising.com","adtechus.com","adcolony.com",
+        "applovin.com","unityads.unity3d.com","vungle.com","chartboost.com",
+        "inmobi.com","ironsrc.com","popads.net","popcash.net","propellerads.com",
+        "adcash.com","exoclick.com","trafficjunky.com","mgid.com","revcontent.com",
+        "media.net","zergnet.com","yieldmo.com","triplelift.com","sharethrough.com",
+        "sonobi.com","sovrn.com","contextweb.com","revjet.com","flashtalking.com",
+        "tremorhub.com","spotxchange.com","spotx.tv","exponential.com","adblade.com",
+        "conversantmedia.com","yieldlove.com","gumgum.com","imasdk.googleapis.com",
+        "amazon-adsystem.com","adsrvr.org","mookie1.com","adroll.com",
+        "pagead2.googlesyndication.com","imrworldwide.com","connect.facebook.net",
+        "juicyads.com","clickadu.com","adsterra.com","hilltopads.net",
+        "activerevenue.com","adskeeper.co.uk","tsyndicate.com","clksite.com",
+        "trafficfactory.biz","popunder.net","adxpansion.com","ero-advertising.com",
+        "nativo.com","infolinks.com","contentabc.com","shareaholic.com",
+        "adpushup.com","marfeel.com","vertoz.com","appier.com",
+        "ad.adfactor.co.in","ads.indiatimes.com","cbsiadservices.indiatimes.com",
+        "komli.com","vdopia.com","mads.amazon.in","union.baidu.com","cpro.baidu.com",
+        "yadro.ru","begun.ru","adnz.co","adspirit.de","betweendigital.com",
+        "bluekai.com","krxd.net","adform.net","rfihub.com","rfihub.net",
+        "yldbt.com","smartclip.net","undertone.com","adkernel.com","vidoomy.com",
+        "bidtheatre.com","stickyadstv.com","freewheel.tv","lotame.com",
+        "mopub.com","millennial-media.com","mobvista.com","smaato.net",
+        "startapp.com","tapjoy.com","flurry.com","madvertise.de","tpc.googlesyndication.com"
+      ],
+      "urlPatterns": [
+        "*/pagead/*","*/adservice/*","*/ads/banners/*","*banner*ad*",
+        "*popunder*","*popupad*","*/affiliate/*","*/adzone/*","*/adsense/*",
+        "*/adframe/*","*/adscript/*","*/adloader/*","*/native-ad/*",
+        "*/sponsored/*","*/promo-banner/*","*/adtrk*","*/imp.php*",
+        "*/banner.php*","*/ad.php*","*/track.php*","*/click.php*"
+      ]
+    },
+    "trackers": {
+      "name": "Trackers & Analytics",
+      "enabled": true,
+      "domains": [
+        "google-analytics.com","googletagmanager.com","googletagservices.com",
+        "hotjar.com","segment.io","segment.com","quantserve.com","chartbeat.com",
+        "mixpanel.com","amplitude.com","fullstory.com","mouseflow.com",
+        "crazyegg.com","clicky.com","mc.yandex.ru","statcounter.com",
+        "newrelic.com","nr-data.net","branch.io","appsflyer.com","adjust.com",
+        "kochava.com","singular.net","optimizely.com","inspectlet.com",
+        "luckyorange.com","heapanalytics.com","clarity.ms","bat.bing.com",
+        "tr.snapchat.com","app-measurement.com","firebaseapp.com",
+        "analytics.twitter.com","analytics.tiktok.com","ct.pinterest.com",
+        "parsely.com","comscore.com","scorecardresearch.com",
+        "decibelinsight.net","vwo.com","abtasty.com","convert.com",
+        "tune.com","mparticle.com","tenjin.io","bugsnag.com","raygun.io",
+        "datadoghq.com","sentry.io","openstat.net","liveinternet.ru",
+        "top.mail.ru","counter.yadro.ru","iesnare.com"
+      ],
+      "urlPatterns": [
+        "*/analytics.js","*/analytics.min.js","*/gtm.js","*/gtag.js",
+        "*/fbevents.js","*/pixel.gif*","*/telemetry/*","*/beacon.js",
+        "*/hotjar-*","*/segment.min.js","*/amplitude.js","*/clarity.js",
+        "*/collect?*","*/event?*","*/track?*","*/log?type=*","*/stats?*",
+        "*/ping?*"
+      ]
+    },
+    "youtube": {
+      "name": "YouTube Ad Mitigation",
+      "enabled": true,
+      "domains": ["imasdk.googleapis.com","ad.youtube.com"],
+      "urlPatterns": [
+        "*youtube.com/pagead/*","*youtube.com/ptracking*",
+        "*youtube.com/api/stats/ads*","*youtube.com/api/stats/atr*",
+        "*youtube.com/get_midroll_info*",
+        "*youtube.com/youtubei/v1/player/ad_break*",
+        "*googlevideo.com/videoplayback*adformat*",
+        "*googlevideo.com/videoplayback*ctier=A*",
+        "*googlevideo.com/videoplayback*oad*",
+        "*imasdk.googleapis.com/js/sdkloader/ima3*",
+        "*static.doubleclick.net/instream/ad_status.js*",
+        "*googleads.g.doubleclick.net/*",
+        "*youtube.com/api/stats/delayplay*ad*"
+      ]
+    },
+    "popups": {
+      "name": "Popup & Annoyance Protection",
+      "enabled": true,
+      "domains": [
+        "onclickads.net","adclick.g.doubleclick.net","syndication.exoclick.com",
+        "serve.popads.net","directrev.com","popunder.net","adspirit.de",
+        "clkmon.com","clkrevenue.com","ero-advertising.com","cpax.com",
+        "clickaine.com","go2jump.org","adwebmaster.net","traffic-media.co",
+        "adsupply.com","exdynsrv.com","clksite.com","newbidder.com",
+        "clicksor.net","clicksor.com","tsyndicate.com","adxpansion.com"
+      ],
+      "urlPatterns": [
+        "*/popup/*","*/popunder/*","*overlay*ad*","*/onclick/*",
+        "*/popclick/*","*/popupads/*"
+      ]
+    }
+  },
+  "cosmeticSelectors": [
+    ".adsbygoogle","ins.adsbygoogle","[id^=\"div-gpt-ad\"]","[data-ad-slot]",
+    "[data-ad-unit]","[data-google-query-id]","[data-ad-client]",
+    ".ad-banner",".ad-container",".ad-wrapper",".ad-block",".ad-unit",
+    ".ad-slot",".ad-row",".ad-box",".ad-label",".ad-frame",".ad-section",
+    ".ad-strip",".ad-inline",".ad-fixed",".ad-sticky",".ad-overlay",
+    ".ad-popup",".ad-interstitial",".adunit",".adwrap",".adDiv",
+    ".ad_banner",".ad_wrapper",".ad_container",".ad_box",".ad_unit",
+    "[class*=\"advertisement\"]","[class*=\"advertisment\"]",
+    "[class*=\"adBanner\"]","[class*=\"adContainer\"]","[class*=\"adWrapper\"]",
+    "[class*=\"adSlot\"]","[class*=\"adUnit\"]","[id*=\"advertisement\"]",
+    "[id*=\"adBanner\"]","[id*=\"gpt-ad\"]","[id*=\"ad-slot\"]",
+    ".popup-backdrop",".modal-backdrop",".overlay-ad",
+    ".toi-plus-subscription",".toi-prem-popup","[class*=\"dontMiss\"]",
+    ".crtv-banner",".crtv_div","[id*=\"criteo\"]",".criteo-slot",
+    "[id*=\"taboola\"]","[class*=\"taboola\"]","[data-taboola-id]",
+    "[id*=\"outbrain\"]","[class*=\"outbrain\"]",".OUTBRAIN",".ob-widget",
+    ".mgadv",".mgadbox","[class*=\"mgid\"]","[id*=\"mgid\"]",
+    ".btm-sticky-wrapper",".dfp-ad-wrapper",".dfp-ad",".dfp-slot",
+    ".dfp-banner","[class*=\"dfp\"]","[class*=\"gam-slot\"]","[id*=\"dfp\"]",
+    ".storyAd",".story-ad",".story_ad",".articleAd",".article-ad",
+    ".article_ad",".inArticleAd",".in-article-ad",".topAd",".top-ad",
+    ".bottomAd",".bottom-ad",".stickyad",".sticky-ad",".floatingAd",
+    ".floating-ad",".float-ad",".corner-ad",".interstitial-ad",
+    ".newsletter-modal",".subscription-popup",".paywall-modal",
+    "ytm-promoted-sparkles-web-renderer","ytm-companion-ad-renderer",
+    "ytm-statement-banner-renderer","ytd-ad-slot-renderer",
+    "ytd-promoted-video-renderer","ytd-in-feed-ad-layout-renderer",
+    "ytm-promoted-video-renderer",".ytp-ad-module",
+    ".ytp-ad-overlay-container","#player-ads",".ytp-ad-text",
+    ".ytp-ad-preview-container",".ytp-ad-skip-button-container",
+    ".ytp-ad-message-container",".ytp-ad-player-overlay",
+    "[class*=\"sticky\"][class*=\"ad\"]","[class*=\"float\"][class*=\"ad\"]",
+    "[class*=\"fixed\"][class*=\"ad\"]","[class*=\"loan\"]","[id*=\"loan\"]",
+    "[class*=\"corner-widget\"]","[class*=\"lead-form\"]",
+    ".sponsored-content",".native-ad",".promoted-content",
+    ".toi-ad",".nav-ad",".topbar-ad",".header-ad",".footer-ad",
+    ".ad-300x250",".ad-728x90",".ad-320x50",".ad-160x600"
+  ]
+}

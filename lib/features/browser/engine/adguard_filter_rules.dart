@@ -117,7 +117,7 @@ class AdGuardFilterRules {
     'connect.facebook.net',  // FB pixel + ads SDK
 
     // Misc ad servers
-    'yandex.ru', 'an.yandex.ru',
+    'an.yandex.ru',
     'yadro.ru', 'bs.yandex.ru',
     'mail.ru', 'top.mail.ru',
     'ads.vk.com', 'targetix.net',
@@ -127,7 +127,7 @@ class AdGuardFilterRules {
     'adnz.co', 'adspirit.de',
     'specificclick.net', 'adsafeprotected.com',
     'adback.co', 'betweendigital.com',
-    'appier.com', 'baidu.com',
+    'appier.com',
     'union.baidu.com', 'cpro.baidu.com',
     'yboss.yahooapis.com',
   };
@@ -176,7 +176,7 @@ class AdGuardFilterRules {
     'firebase.com', 'app-measurement.com', 'firebaseapp.com',
 
     // Heatmap / session recording
-    'clarity.ms', 'clarity.microsoft.com', 'bing.com',
+    'clarity.ms', 'clarity.microsoft.com',
     'bat.bing.com', 'c.clarity.ms',
 
     // Social trackers

@@ -91,16 +91,11 @@ class CosmeticFilter {
 
             // 4. Floating overlay / sticky ads (bottom/corner popups)
             const fixedEls = root.querySelectorAll('[style*="position: fixed"], [style*="position:fixed"], [style*="position: sticky"], [style*="position:sticky"]');
+            const adClassPattern = /(?:^|[\\s_-])(?:ad|ads|advertisement|sponsor|promo|banner)(?:[\\s_-]|\$)/i;
             for (let el of fixedEls) {
-              const src = (el.innerHTML || '').toLowerCase();
-              const cls = (el.className || '').toLowerCase();
-              const id  = (el.id || '').toLowerCase();
-              const adSignals = ['loan', 'instant', 'ads', 'promo', 'offer', 'click here', 'apply now',
-                                 'advertisement', 'sponsor', 'banner', 'popup', 'subscribe now',
-                                 'download app', 'install', 'get now', 'free trial', 'sign up'];
-              const isAd = adSignals.some(s => src.includes(s)) ||
-                           cls.includes('ad') || cls.includes('promo') || cls.includes('banner') ||
-                           id.includes('ad') || id.includes('promo') || id.includes('banner');
+              const cls = el.className && typeof el.className === 'string' ? el.className : '';
+              const id  = el.id || '';
+              const isAd = adClassPattern.test(cls) || adClassPattern.test(id);
               if (isAd) hideEl(el);
             }
 
@@ -282,7 +277,6 @@ class CosmeticFilter {
       '[class*="sticky"][class*="ad"]',
       '[class*="float"][class*="ad"]',
       '[class*="fixed"][class*="ad"]',
-      'div[style*="position:fixed"][style*="z-index"]',
 
       // Loan / instant loan corner widgets (common on Indian news sites)
       '[class*="loan"]',

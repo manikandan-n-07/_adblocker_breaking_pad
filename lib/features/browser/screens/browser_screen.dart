@@ -24,6 +24,7 @@ class BrowserScreen extends StatefulWidget {
 
 class _BrowserScreenState extends State<BrowserScreen> {
   final BrowserController _controller = BrowserController();
+  final TextEditingController _homeSearchController = TextEditingController();
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   @override
   void dispose() {
+    _homeSearchController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -184,8 +186,13 @@ class _BrowserScreenState extends State<BrowserScreen> {
       shouldOverrideUrlLoading: (webController, navigationAction) async {
         return await BrowserNavigation.handleNavigationAction(webController, navigationAction);
       },
-      onReceivedServerTrustAuthRequest: (webController, challenge) async {
-        return await BrowserNavigation.handleReceivedServerTrustAuthRequest(webController, challenge);
+      onCreateWindow: (webController, createWindowAction) async {
+        final url = createWindowAction.request.url?.toString();
+        if (url != null && url.isNotEmpty) {
+          _controller.navigate(url);
+          return true;
+        }
+        return false;
       },
       onDownloadStartRequest: (webController, downloadRequest) async {
         final url = downloadRequest.url.toString();
@@ -204,8 +211,6 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   Widget _buildHomeView(BrowserTab tab) {
-    final searchController = TextEditingController();
-
     return Container(
       color: Colors.black,
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -262,8 +267,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
                   border: Border.all(color: BrowserConstants.borderLight, width: 1.2),
                 ),
                 child: TextField(
-                  controller: searchController,
+                  controller: _homeSearchController,
                   style: const TextStyle(color: Colors.white, fontSize: 15),
+                  textInputAction: TextInputAction.go,
                   decoration: InputDecoration(
                     hintText: 'Search or enter website address',
                     hintStyle: const TextStyle(color: BrowserConstants.textSecondary),
@@ -271,8 +277,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                       onPressed: () {
-                        final text = searchController.text.trim();
+                        final text = _homeSearchController.text.trim();
                         if (text.isNotEmpty) {
+                          _homeSearchController.clear();
                           _controller.navigate(text);
                         }
                       },
@@ -281,8 +288,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                   onSubmitted: (text) {
-                    if (text.trim().isNotEmpty) {
-                      _controller.navigate(text);
+                    final trimmed = text.trim();
+                    if (trimmed.isNotEmpty) {
+                      _homeSearchController.clear();
+                      _controller.navigate(trimmed);
                     }
                   },
                 ),
