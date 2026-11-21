@@ -17,17 +17,11 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || (inputs.version || 'v1.0.0') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Determine Version Tag
-        run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${{ github.event.inputs.version || 'v1.0.0' }}" >> $GITHUB_ENV
-          fi
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -56,19 +50,18 @@ jobs:
 
       - name: Prepare Release Artifacts
         run: |
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/breaking_pad_browser_${{ env.VERSION }}.apk
-          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/breaking_pad_browser_latest.apk
+          cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/breaking_pad_browser_${RELEASE_VERSION}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/breaking_pad_browser_latest.apk"
 
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.VERSION }}
-          name: BREAKING PAD Browser ${{ env.VERSION }}
+          tag_name: ${{ env.RELEASE_VERSION }}
+          name: BREAKING PAD Browser ${{ env.RELEASE_VERSION }}
           draft: false
           prerelease: false
           generate_release_notes: true
-          token: ${{ secrets.GITHUB_TOKEN }}
           files: |
-            build/app/outputs/flutter-apk/breaking_pad_browser_${{ env.VERSION }}.apk
-            build/app/outputs/flutter-apk/breaking_pad_browser_latest.apk
-            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/*.apk
