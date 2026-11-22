@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class BrowserConstants {
   static const String appName = 'BREAKING PAD';
   static const String appFullName = 'BREAKING PAD Browser';
-  static const String appVersion = '1.0.3';
+  static const String appVersion = '1.0.4';
   static const String defaultHomepage = ''; // Blank = Instant Home Screen
 
   // Realistic Chrome User Agents

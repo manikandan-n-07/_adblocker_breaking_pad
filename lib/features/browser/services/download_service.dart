@@ -102,6 +102,10 @@ class DownloadService extends ChangeNotifier {
       // Perform download
       final client = http.Client();
       final request = http.Request('GET', uri);
+      request.headers['User-Agent'] =
+          'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.113 Mobile Safari/537.36';
+      request.followRedirects = true;
+      request.maxRedirects = 10;
       final response = await client.send(request);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {

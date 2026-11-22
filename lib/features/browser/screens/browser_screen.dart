@@ -5,6 +5,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import '../engine/adguard_engine.dart';
 import '../models/browser_tab.dart';
+import '../services/app_update_service.dart';
 import '../services/download_service.dart';
 import '../services/pip_service.dart';
 import '../services/theme_service.dart';
@@ -44,6 +45,22 @@ class _BrowserScreenState extends State<BrowserScreen>
     PiPService.instance.onPiPChanged = (inPiP) {
       if (mounted) setState(() => _isInPiP = inPiP);
     };
+
+    // Auto-check for updates on startup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUpdateOnStartup();
+    });
+  }
+
+  void _checkUpdateOnStartup() {
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        AppUpdateService.instance.checkAndPromptUpdate(
+          context,
+          notifyIfLatest: false,
+        );
+      }
+    });
   }
 
   @override
