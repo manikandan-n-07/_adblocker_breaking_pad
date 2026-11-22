@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../engine/adguard_engine.dart';
 import '../services/app_update_service.dart';
 import '../services/history_service.dart';
+import '../services/theme_service.dart';
 import '../utils/browser_constants.dart';
 import '../webview/browser_controller.dart';
 import 'privacy_dashboard_screen.dart';
@@ -25,11 +26,13 @@ class _BrowserSettingsScreenState extends State<BrowserSettingsScreen> {
     _controller = widget.controller ?? BrowserController();
     _controller.init();
     _controller.addListener(_onControllerChange);
+    ThemeService.instance.addListener(_onControllerChange);
   }
 
   @override
   void dispose() {
     _controller.removeListener(_onControllerChange);
+    ThemeService.instance.removeListener(_onControllerChange);
     super.dispose();
   }
 
@@ -182,23 +185,30 @@ class _BrowserSettingsScreenState extends State<BrowserSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: engine,
+      listenable: Listenable.merge([engine, ThemeService.instance]),
       builder: (context, _) {
         final ruleManager = engine.ruleManager;
+        final isDark = ThemeService.instance.isDark;
+        final bgColor = isDark ? Colors.black : BrowserConstants.lightBackground;
+        final appBarBg = isDark ? BrowserConstants.surface : BrowserConstants.lightSurface;
+        final iconColor = isDark ? Colors.white : Colors.black;
+        final textColor = isDark ? Colors.white : Colors.black;
+        final subtitleColor = isDark ? BrowserConstants.textSecondary : BrowserConstants.lightTextSecondary;
+        final dividerColor = isDark ? BrowserConstants.border : BrowserConstants.lightBorder;
 
         return Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: bgColor,
           appBar: AppBar(
-            backgroundColor: BrowserConstants.surface,
+            backgroundColor: appBarBg,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(Icons.arrow_back, color: iconColor),
               onPressed: () => Navigator.pop(context),
             ),
-            title: const Text(
+            title: Text(
               'Settings',
               style: TextStyle(
-                color: Colors.white,
+                color: textColor,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -207,34 +217,51 @@ class _BrowserSettingsScreenState extends State<BrowserSettingsScreen> {
           body: ListView(
             padding: const EdgeInsets.symmetric(vertical: 8),
             children: [
+              // 0. Appearance Section
+              _buildSectionHeader('APPEARANCE', textColor: textColor),
+              SwitchListTile(
+                secondary: Icon(
+                  isDark ? Icons.dark_mode : Icons.light_mode,
+                  color: iconColor,
+                ),
+                title: Text('Dark Mode', style: TextStyle(color: textColor)),
+                subtitle: Text(
+                  isDark ? 'Currently using dark theme' : 'Currently using light theme',
+                  style: TextStyle(color: subtitleColor),
+                ),
+                value: isDark,
+                onChanged: (_) => ThemeService.instance.toggle(),
+              ),
+              Divider(color: dividerColor),
+
               // 1. General Section
-              _buildSectionHeader('GENERAL'),
+              _buildSectionHeader('GENERAL', textColor: textColor),
               ListTile(
-                leading: const Icon(Icons.search, color: Colors.white),
-                title: const Text('Search Engine', style: TextStyle(color: Colors.white)),
-                subtitle: Text(_controller.searchEngine, style: const TextStyle(color: BrowserConstants.textSecondary)),
-                trailing: const Icon(Icons.chevron_right, color: Colors.white),
+                leading: Icon(Icons.search, color: iconColor),
+                title: Text('Search Engine', style: TextStyle(color: textColor)),
+                subtitle: Text(_controller.searchEngine, style: TextStyle(color: subtitleColor)),
+                trailing: Icon(Icons.chevron_right, color: iconColor),
                 onTap: () => _showSearchEngineDialog(_controller),
               ),
               ListTile(
-                leading: const Icon(Icons.home_outlined, color: Colors.white),
-                title: const Text('Homepage', style: TextStyle(color: Colors.white)),
+                leading: Icon(Icons.home_outlined, color: iconColor),
+                title: Text('Homepage', style: TextStyle(color: textColor)),
                 subtitle: Text(
                   _controller.homepage.isEmpty ? 'Home Screen (Speed Dial)' : _controller.homepage,
-                  style: const TextStyle(color: BrowserConstants.textSecondary),
+                  style: TextStyle(color: subtitleColor),
                 ),
-                trailing: const Icon(Icons.chevron_right, color: Colors.white),
+                trailing: Icon(Icons.chevron_right, color: iconColor),
                 onTap: () => _showHomepageDialog(_controller),
               ),
-              const Divider(color: BrowserConstants.border),
+              Divider(color: dividerColor),
 
               // 2. AdGuard Engine & Protection Section
-              _buildSectionHeader('ADGUARD SHIELD PROTECTION'),
+              _buildSectionHeader('ADGUARD SHIELD PROTECTION', textColor: textColor),
               ListTile(
-                leading: const Icon(Icons.dashboard_outlined, color: Colors.white),
-                title: const Text('Privacy Dashboard', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('View live statistics and filter status', style: TextStyle(color: BrowserConstants.textSecondary)),
-                trailing: const Icon(Icons.chevron_right, color: Colors.white),
+                leading: Icon(Icons.dashboard_outlined, color: iconColor),
+                title: Text('Privacy Dashboard', style: TextStyle(color: textColor)),
+                subtitle: Text('View live statistics and filter status', style: TextStyle(color: subtitleColor)),
+                trailing: Icon(Icons.chevron_right, color: iconColor),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -243,75 +270,70 @@ class _BrowserSettingsScreenState extends State<BrowserSettingsScreen> {
                 },
               ),
               SwitchListTile(
-                secondary: const Icon(Icons.block, color: Colors.white),
-                title: const Text('Ad Blocking', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Filter ads and banners at the network layer', style: TextStyle(color: BrowserConstants.textSecondary)),
+                secondary: Icon(Icons.block, color: iconColor),
+                title: Text('Ad Blocking', style: TextStyle(color: textColor)),
+                subtitle: Text('Filter ads and banners at the network layer', style: TextStyle(color: subtitleColor)),
                 value: ruleManager.isAdBlockingEnabled,
-                activeThumbColor: Colors.white,
                 onChanged: (v) => ruleManager.setAdBlocking(v),
               ),
               SwitchListTile(
-                secondary: const Icon(Icons.track_changes, color: Colors.white),
-                title: const Text('Tracker Protection', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Block third-party tracking scripts & telemetry', style: TextStyle(color: BrowserConstants.textSecondary)),
+                secondary: Icon(Icons.track_changes, color: iconColor),
+                title: Text('Tracker Protection', style: TextStyle(color: textColor)),
+                subtitle: Text('Block third-party tracking scripts & telemetry', style: TextStyle(color: subtitleColor)),
                 value: ruleManager.isTrackerBlockingEnabled,
-                activeThumbColor: Colors.white,
                 onChanged: (v) => ruleManager.setTrackerBlocking(v),
               ),
               SwitchListTile(
-                secondary: const Icon(Icons.play_circle_outline, color: Colors.white),
-                title: const Text('YouTube Ad Mitigation', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Auto-skip and mute video advertisements', style: TextStyle(color: BrowserConstants.textSecondary)),
+                secondary: Icon(Icons.play_circle_outline, color: iconColor),
+                title: Text('YouTube Ad Mitigation', style: TextStyle(color: textColor)),
+                subtitle: Text('Auto-skip and mute video advertisements', style: TextStyle(color: subtitleColor)),
                 value: ruleManager.isYouTubeBlockingEnabled,
-                activeThumbColor: Colors.white,
                 onChanged: (v) => ruleManager.setYouTubeBlocking(v),
               ),
               SwitchListTile(
-                secondary: const Icon(Icons.open_in_new_off, color: Colors.white),
-                title: const Text('Popup Protection', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Block popups and unsolicited redirects', style: TextStyle(color: BrowserConstants.textSecondary)),
+                secondary: Icon(Icons.open_in_new_off, color: iconColor),
+                title: Text('Popup Protection', style: TextStyle(color: textColor)),
+                subtitle: Text('Block popups and unsolicited redirects', style: TextStyle(color: subtitleColor)),
                 value: ruleManager.isPopupBlockingEnabled,
-                activeThumbColor: Colors.white,
                 onChanged: (v) => ruleManager.setPopupBlocking(v),
               ),
               SwitchListTile(
-                secondary: const Icon(Icons.brush_outlined, color: Colors.white),
-                title: const Text('Cosmetic Filtering', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Collapse empty ad containers and overlays', style: TextStyle(color: BrowserConstants.textSecondary)),
+                secondary: Icon(Icons.brush_outlined, color: iconColor),
+                title: Text('Cosmetic Filtering', style: TextStyle(color: textColor)),
+                subtitle: Text('Collapse empty ad containers and overlays', style: TextStyle(color: subtitleColor)),
                 value: ruleManager.isCosmeticFilteringEnabled,
-                activeThumbColor: Colors.white,
                 onChanged: (v) => ruleManager.setCosmeticFiltering(v),
               ),
               ListTile(
-                leading: const Icon(Icons.add_circle_outline, color: Colors.white),
-                title: const Text('Add Custom Filter Rule', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Add user-defined URL or cosmetic rule', style: TextStyle(color: BrowserConstants.textSecondary)),
+                leading: Icon(Icons.add_circle_outline, color: iconColor),
+                title: Text('Add Custom Filter Rule', style: TextStyle(color: textColor)),
+                subtitle: Text('Add user-defined URL or cosmetic rule', style: TextStyle(color: subtitleColor)),
                 onTap: _showAddCustomRuleDialog,
               ),
-              const Divider(color: BrowserConstants.border),
+              Divider(color: dividerColor),
 
               // 3. Privacy & Data Section
-              _buildSectionHeader('PRIVACY & DATA'),
+              _buildSectionHeader('PRIVACY & DATA', textColor: textColor),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.white),
-                title: const Text('Clear Browsing Data', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('History, cached rules, stats', style: TextStyle(color: BrowserConstants.textSecondary)),
+                leading: Icon(Icons.delete_outline, color: iconColor),
+                title: Text('Clear Browsing Data', style: TextStyle(color: textColor)),
+                subtitle: Text('History, cached rules, stats', style: TextStyle(color: subtitleColor)),
                 onTap: _showClearDataDialog,
               ),
-              const Divider(color: BrowserConstants.border),
+              Divider(color: dividerColor),
 
               // 4. About & Version Section
-              _buildSectionHeader('ABOUT & UPDATES'),
+              _buildSectionHeader('ABOUT & UPDATES', textColor: textColor),
               ListTile(
-                leading: const Icon(Icons.info_outline, color: Colors.white),
-                title: const Text('About BREAKING PAD Browser', style: TextStyle(color: Colors.white)),
-                subtitle: Text('Version ${BrowserConstants.appVersion} • Standalone Local Engine', style: const TextStyle(color: BrowserConstants.textSecondary)),
+                leading: Icon(Icons.info_outline, color: iconColor),
+                title: Text('About BREAKING PAD Browser', style: TextStyle(color: textColor)),
+                subtitle: Text('Version ${BrowserConstants.appVersion} • Standalone Local Engine', style: TextStyle(color: subtitleColor)),
               ),
               ListTile(
-                leading: const Icon(Icons.system_update_outlined, color: Colors.white),
-                title: const Text('Check for Updates', style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Check GitHub releases for latest version', style: TextStyle(color: BrowserConstants.textSecondary)),
-                trailing: const Icon(Icons.chevron_right, color: Colors.white),
+                leading: Icon(Icons.system_update_outlined, color: iconColor),
+                title: Text('Check for Updates', style: TextStyle(color: textColor)),
+                subtitle: Text('Check GitHub releases for latest version', style: TextStyle(color: subtitleColor)),
+                trailing: Icon(Icons.chevron_right, color: iconColor),
                 onTap: () => AppUpdateService.instance.checkAndPromptUpdate(context, notifyIfLatest: true),
               ),
               const SizedBox(height: 24),
@@ -322,13 +344,13 @@ class _BrowserSettingsScreenState extends State<BrowserSettingsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, {Color? textColor}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
       child: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: textColor ?? Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.1,

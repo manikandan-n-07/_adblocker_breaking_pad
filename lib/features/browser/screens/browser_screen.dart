@@ -6,6 +6,8 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../engine/adguard_engine.dart';
 import '../models/browser_tab.dart';
 import '../services/download_service.dart';
+import '../services/pip_service.dart';
+import '../services/theme_service.dart';
 import '../utils/browser_constants.dart';
 import '../utils/url_helper.dart';
 import '../webview/browser_configuration.dart';
@@ -24,21 +26,44 @@ class BrowserScreen extends StatefulWidget {
   State<BrowserScreen> createState() => _BrowserScreenState();
 }
 
-class _BrowserScreenState extends State<BrowserScreen> {
+class _BrowserScreenState extends State<BrowserScreen>
+    with WidgetsBindingObserver {
   final BrowserController _controller = BrowserController();
   final TextEditingController _homeSearchController = TextEditingController();
+
+  bool _isInPiP = false;
+  bool _mediaPlaying = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller.init();
+
+    // Listen to PiP state changes from native
+    PiPService.instance.onPiPChanged = (inPiP) {
+      if (mounted) setState(() => _isInPiP = inPiP);
+    };
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _homeSearchController.dispose();
     _controller.dispose();
+    PiPService.instance.onPiPChanged = null;
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When app is paused/minimized but NOT entering PiP, keep audio playing
+    // The WebView handles this natively on Android — no extra action needed.
+    // We just track lifecycle to update UI state.
+    if (state == AppLifecycleState.resumed) {
+      if (mounted) setState(() => _isInPiP = false);
+    }
   }
 
   Future<bool> _handlePopScope() async {
@@ -53,21 +78,34 @@ class _BrowserScreenState extends State<BrowserScreen> {
     return true;
   }
 
+  /// Track if media is currently playing (set by JS bridge)
+  void _setMediaPlaying(bool playing) {
+    _mediaPlaying = playing;
+    PiPService.instance.setMediaPlaying(playing);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = ThemeService.instance.isDark;
+    final bgColor = isDark ? Colors.black : BrowserConstants.lightBackground;
+
     return ListenableBuilder(
-      listenable: _controller,
+      listenable: Listenable.merge([_controller, ThemeService.instance]),
       builder: (context, _) {
         final tabs = _controller.tabs;
         final currentIndex = _controller.currentTabIndex;
         final currentTab = _controller.currentTab;
 
         if (tabs.isEmpty || currentTab == null) {
-          // Fallback - should never happen because controller seeds initial tab
-          return const Scaffold(
-            backgroundColor: Colors.black,
-            body: SizedBox.shrink(),
+          return Scaffold(
+            backgroundColor: bgColor,
+            body: const SizedBox.shrink(),
           );
+        }
+
+        // PiP mode — show minimal overlay UI
+        if (_isInPiP) {
+          return _buildPiPOverlay(currentTab, isDark);
         }
 
         return PopScope(
@@ -80,7 +118,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
             }
           },
           child: Scaffold(
-            backgroundColor: Colors.black,
+            backgroundColor: bgColor,
+
             body: SafeArea(
               child: Column(
                 children: [
@@ -100,9 +139,23 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
                   // Active WebViews Stack
                   Expanded(
-                    child: IndexedStack(
-                      index: currentIndex,
-                      children: tabs.map((tab) => _buildTabView(tab)).toList(),
+                    child: Stack(
+                      children: [
+                        IndexedStack(
+                          index: currentIndex,
+                          children: tabs
+                              .map((tab) => _buildTabView(tab))
+                              .toList(),
+                        ),
+
+                        // PiP Floating Button when media is detected
+                        if (_mediaPlaying && PiPService.instance.isPiPSupported)
+                          Positioned(
+                            bottom: 12,
+                            right: 12,
+                            child: _buildPiPFab(isDark),
+                          ),
+                      ],
                     ),
                   ),
 
@@ -111,13 +164,16 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     tab: currentTab,
                     tabCount: tabs.length,
                     onBack: () => currentTab.webViewController?.goBack(),
-                    onForward: () => currentTab.webViewController?.goForward(),
-                    onHome: () => _controller.navigate(_controller.homepage),
+                    onForward: () =>
+                        currentTab.webViewController?.goForward(),
+                    onHome: () =>
+                        _controller.navigate(_controller.homepage),
                     onTabs: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => TabsScreen(controller: _controller),
+                          builder: (_) =>
+                              TabsScreen(controller: _controller),
                         ),
                       );
                     },
@@ -131,6 +187,67 @@ class _BrowserScreenState extends State<BrowserScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPiPFab(bool isDark) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () async {
+          await PiPService.instance.enterPiP();
+        },
+        borderRadius: BorderRadius.circular(28),
+        child: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white : Colors.black,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.picture_in_picture_alt,
+            color: isDark ? Colors.black : Colors.white,
+            size: 24,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Minimal PiP overlay shown while in picture-in-picture mode
+  Widget _buildPiPOverlay(BrowserTab tab, bool isDark) {
+    final bgColor = isDark ? Colors.black : BrowserConstants.lightBackground;
+    final textColor = isDark ? Colors.white : Colors.black;
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.play_circle_filled,
+                size: 48, color: textColor.withValues(alpha: 0.7)),
+            const SizedBox(height: 8),
+            Text(
+              tab.title.isEmpty ? 'Playing' : tab.title,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -159,6 +276,11 @@ class _BrowserScreenState extends State<BrowserScreen> {
             if (uri != null) {
               final urlStr = uri.toString();
               tab.url = urlStr;
+              if (urlStr.contains('spotify.com') && !tab.isDesktopMode) {
+                webController.setSettings(
+                  settings: BrowserConfiguration.buildSettings(tab),
+                );
+              }
               _controller.clearTabError(tab);
               _controller.updateTabProgress(tab, 0.1);
               _controller.updateTabUrl(tab, urlStr);
@@ -180,12 +302,13 @@ class _BrowserScreenState extends State<BrowserScreen> {
               _controller.updateTabTitle(tab, title);
               _controller.updateTabUrl(tab, uri.toString());
             }
-            // Aggressive immediate cleanup to eliminate empty ad containers, labels, and widgets
             await AdGuardEngine.instance.injectCosmeticCleanup(
               webController,
               domain: UrlHelper.extractDomain(uri?.toString() ?? tab.url),
             );
-            // Secondary cleanup to catch lazy/React hydrated ad placeholders
+            // Inject JS to detect media playing state for PiP FAB
+            await _injectMediaDetectionScript(webController);
+
             Future.delayed(const Duration(milliseconds: 800), () {
               if (mounted) {
                 AdGuardEngine.instance.injectCosmeticCleanup(
@@ -252,14 +375,79 @@ class _BrowserScreenState extends State<BrowserScreen> {
     );
   }
 
+  /// Inject JavaScript that tells Flutter when media starts/stops playing.
+  /// Uses window.postMessage to communicate back via console.message listener.
+  Future<void> _injectMediaDetectionScript(
+      InAppWebViewController webController) async {
+    // Add a JS handler so the page can notify Flutter about media state
+    try {
+      webController.addJavaScriptHandler(
+        handlerName: 'mediaStateChanged',
+        callback: (args) {
+          final playing = args.isNotEmpty ? args[0] as bool? ?? false : false;
+          if (mounted) {
+            setState(() {
+              _setMediaPlaying(playing);
+            });
+          }
+        },
+      );
+    } catch (_) {}
+
+    try {
+      await webController.evaluateJavascript(source: '''
+        (function() {
+          function checkMedia() {
+            var els = document.querySelectorAll('video, audio');
+            for (var i = 0; i < els.length; i++) {
+              if (!els[i].paused && !els[i].ended && els[i].readyState > 2) {
+                return true;
+              }
+            }
+            return false;
+          }
+
+          function notify(playing) {
+            try {
+              window.flutter_inappwebview.callHandler('mediaStateChanged', playing);
+            } catch(e) {}
+          }
+
+          document.addEventListener('play', function(e) {
+            var t = e.target.tagName;
+            if (t === 'VIDEO' || t === 'AUDIO') notify(true);
+          }, true);
+
+          document.addEventListener('pause', function(e) {
+            var t = e.target.tagName;
+            if (t === 'VIDEO' || t === 'AUDIO') notify(checkMedia());
+          }, true);
+
+          document.addEventListener('ended', function(e) {
+            notify(checkMedia());
+          }, true);
+        })();
+      ''');
+    } catch (_) {}
+  }
+
   Widget _buildErrorView(BrowserTab tab) {
+    final isDark = ThemeService.instance.isDark;
+    final bgColor = isDark ? Colors.black : BrowserConstants.lightBackground;
+    final surfaceColor = isDark ? BrowserConstants.surface : BrowserConstants.lightSurface;
+    final borderColor = isDark ? Colors.white24 : Colors.black12;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final textSecondary = isDark ? Colors.white38 : Colors.black38;
+    final textMuted = isDark ? Colors.white70 : Colors.black54;
+    final textSubtle = isDark ? Colors.white54 : Colors.black45;
+
     final isDnsOrOffline =
         (tab.errorMessage ?? '').contains('ERR_NAME_NOT_RESOLVED') ||
         (tab.errorMessage ?? '').contains('ERR_INTERNET_DISCONNECTED') ||
         (tab.errorMessage ?? '').contains('ERR_CONNECTION');
 
     return Container(
-      color: Colors.black,
+      color: bgColor,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Center(
         child: SingleChildScrollView(
@@ -270,21 +458,21 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: BrowserConstants.surface,
+                  color: surfaceColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24, width: 2.0),
+                  border: Border.all(color: borderColor, width: 2.0),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.wifi_off_rounded,
                   size: 36,
-                  color: Colors.white70,
+                  color: textMuted,
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Unable to Connect',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: textColor,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -296,7 +484,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white38, fontSize: 13),
+                style: TextStyle(color: textSecondary, fontSize: 13),
               ),
               const SizedBox(height: 16),
               Container(
@@ -305,15 +493,15 @@ class _BrowserScreenState extends State<BrowserScreen> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
+                  color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFEEEEEE),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white12),
+                  border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
                 ),
                 child: Text(
                   tab.errorMessage ?? 'Network request failed',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white70,
+                  style: TextStyle(
+                    color: textMuted,
                     fontSize: 12,
                     fontFamily: 'monospace',
                   ),
@@ -325,7 +513,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     ? 'Check your device internet or emulator DNS settings.'
                     : 'The server may be down or unreachable.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white54, fontSize: 13),
+                style: TextStyle(color: textSubtle, fontSize: 13),
               ),
               const SizedBox(height: 28),
               Row(
@@ -336,17 +524,17 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       _controller.clearTabError(tab);
                       _controller.navigate(_controller.homepage);
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.home_outlined,
                       size: 18,
-                      color: Colors.white70,
+                      color: textMuted,
                     ),
-                    label: const Text(
+                    label: Text(
                       'Home',
-                      style: TextStyle(color: Colors.white70),
+                      style: TextStyle(color: textMuted),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white24),
+                      side: BorderSide(color: borderColor),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 12,
@@ -362,20 +550,20 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       _controller.clearTabError(tab);
                       tab.webViewController?.reload();
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.refresh_rounded,
                       size: 18,
-                      color: Colors.black,
+                      color: isDark ? Colors.black : Colors.white,
                     ),
-                    label: const Text(
+                    label: Text(
                       'Try Again',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: isDark ? Colors.black : Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
+                      backgroundColor: isDark ? Colors.white : Colors.black,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 12,
@@ -395,29 +583,38 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   Widget _buildHomeView(BrowserTab tab) {
+    final isDark = ThemeService.instance.isDark;
+    final bgColor = isDark ? Colors.black : BrowserConstants.lightBackground;
+    final surfaceColor = isDark ? BrowserConstants.surface : BrowserConstants.lightSurface;
+    final borderColor = isDark ? Colors.white : Colors.black;
+    final borderLightColor = isDark ? BrowserConstants.borderLight : BrowserConstants.lightBorderLight;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final textSecColor = isDark ? BrowserConstants.textSecondary : BrowserConstants.lightTextSecondary;
+    final hintStyle = TextStyle(color: textSecColor);
+
     return Container(
-      color: Colors.black,
+      color: bgColor,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Monochrome Brand Logo Badge
+              // Brand Logo Badge
               Container(
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
-                  color: BrowserConstants.surface,
+                  color: surfaceColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2.0),
+                  border: Border.all(color: borderColor, width: 2.0),
                 ),
                 child: Icon(
                   tab.isIncognito
                       ? Icons.visibility_off
                       : Icons.shield_outlined,
                   size: 38,
-                  color: Colors.white,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 18),
@@ -426,8 +623,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 tab.isIncognito
                     ? 'PRIVATE BROWSING'
                     : BrowserConstants.appFullName,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: textColor,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5,
@@ -438,8 +635,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 tab.isIncognito
                     ? 'No history, cookies or local traces saved'
                     : 'AdGuard Ad-Blocking • Built-in Privacy • Zero Trackers',
-                style: const TextStyle(
-                  color: BrowserConstants.textSecondary,
+                style: TextStyle(
+                  color: textSecColor,
                   fontSize: 12,
                 ),
                 textAlign: TextAlign.center,
@@ -447,34 +644,32 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
               const SizedBox(height: 28),
 
-              // Minimalist Monochrome Search Bar
+              // Search Bar
               Container(
                 decoration: BoxDecoration(
-                  color: BrowserConstants.surface,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: BrowserConstants.borderLight,
+                    color: borderLightColor,
                     width: 1.2,
                   ),
                 ),
                 child: TextField(
                   controller: _homeSearchController,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: TextStyle(color: textColor, fontSize: 15),
                   textInputAction: TextInputAction.go,
                   decoration: InputDecoration(
                     hintText: 'Search or enter website address',
-                    hintStyle: const TextStyle(
-                      color: BrowserConstants.textSecondary,
-                    ),
-                    prefixIcon: const Icon(
+                    hintStyle: hintStyle,
+                    prefixIcon: Icon(
                       Icons.search,
-                      color: Colors.white,
+                      color: textColor,
                       size: 20,
                     ),
                     suffixIcon: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_forward,
-                        color: Colors.white,
+                        color: textColor,
                         size: 20,
                       ),
                       onPressed: () {
@@ -503,48 +698,30 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
               const SizedBox(height: 32),
 
-              // Monochrome Speed Dial Shortcuts
+              // Speed Dial Shortcuts
               Wrap(
                 spacing: 16,
                 runSpacing: 16,
                 alignment: WrapAlignment.center,
                 children: [
+                  _buildSpeedDial('Google', 'https://www.google.com',
+                      Icons.search, isDark),
+                  _buildSpeedDial('YouTube', 'https://www.youtube.com',
+                      Icons.play_arrow, isDark),
+                  _buildSpeedDial('Wikipedia', 'https://www.wikipedia.org',
+                      Icons.menu_book, isDark),
                   _buildSpeedDial(
-                    'Google',
-                    'https://www.google.com',
-                    Icons.search,
-                  ),
+                      'Reddit', 'https://www.reddit.com', Icons.forum, isDark),
                   _buildSpeedDial(
-                    'YouTube',
-                    'https://www.youtube.com',
-                    Icons.play_arrow,
-                  ),
-                  _buildSpeedDial(
-                    'Wikipedia',
-                    'https://www.wikipedia.org',
-                    Icons.menu_book,
-                  ),
-                  _buildSpeedDial(
-                    'Reddit',
-                    'https://www.reddit.com',
-                    Icons.forum,
-                  ),
-                  _buildSpeedDial(
-                    'GitHub',
-                    'https://www.github.com',
-                    Icons.code,
-                  ),
-                  _buildSpeedDial(
-                    'News',
-                    'https://news.google.com',
-                    Icons.newspaper,
-                  ),
+                      'GitHub', 'https://www.github.com', Icons.code, isDark),
+                  _buildSpeedDial('News', 'https://news.google.com',
+                      Icons.newspaper, isDark),
                 ],
               ),
 
               const SizedBox(height: 28),
 
-              // Privacy Status Monochrome Pill
+              // Privacy Status Pill
               ListenableBuilder(
                 listenable: AdGuardEngine.instance,
                 builder: (context, _) {
@@ -556,23 +733,24 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: BrowserConstants.surface,
+                      color: surfaceColor,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: BrowserConstants.border),
+                      border: Border.all(
+                          color: isDark ? BrowserConstants.border : BrowserConstants.lightBorder),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.security,
-                          color: Colors.white,
+                          color: textColor,
                           size: 16,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           '$totalBlocked Threats & Ads Blocked Locally',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: textColor,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -589,7 +767,12 @@ class _BrowserScreenState extends State<BrowserScreen> {
     );
   }
 
-  Widget _buildSpeedDial(String name, String url, IconData icon) {
+  Widget _buildSpeedDial(
+      String name, String url, IconData icon, bool isDark) {
+    final surfaceColor = isDark ? BrowserConstants.surface : BrowserConstants.lightSurface;
+    final borderColor = isDark ? BrowserConstants.borderLight : BrowserConstants.lightBorderLight;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return InkWell(
       onTap: () => _controller.navigate(url),
       borderRadius: BorderRadius.circular(16),
@@ -602,20 +785,20 @@ class _BrowserScreenState extends State<BrowserScreen> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: BrowserConstants.surface,
+                color: surfaceColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: BrowserConstants.borderLight,
+                  color: borderColor,
                   width: 1.2,
                 ),
               ),
-              child: Icon(icon, color: Colors.white, size: 22),
+              child: Icon(icon, color: textColor, size: 22),
             ),
             const SizedBox(height: 6),
             Text(
               name,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: textColor,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),

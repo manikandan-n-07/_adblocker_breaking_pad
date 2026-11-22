@@ -143,6 +143,23 @@ class AdGuardEngine extends ChangeNotifier {
     final result = networkFilter.shouldBlockUrl(url, pageUrl: pageUrl);
 
     if (result.isBlocked) {
+      // For Spotify ad requests, return valid JSON mock response so player does not crash or detect blocker
+      if (url.contains('spotify.com/ad-logic') || url.contains('spotify.com/ads/')) {
+        return WebResourceResponse(
+          contentType: 'application/json',
+          contentEncoding: 'utf-8',
+          statusCode: 200,
+          reasonPhrase: 'OK',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+          },
+          data: Uint8List.fromList(
+            utf8.encode('{"ad_breaks":[],"ads":[],"in_ad_break":false}'),
+          ),
+        );
+      }
+
       // Empty 200 OK response with 0 data — avoids WebView hanging/timeout bugs with 204
       return WebResourceResponse(
         contentType: 'text/plain',

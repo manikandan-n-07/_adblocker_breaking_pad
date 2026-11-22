@@ -6,6 +6,7 @@ import '../models/browser_tab.dart';
 import '../services/history_service.dart';
 import '../utils/browser_constants.dart';
 import '../utils/url_helper.dart';
+import 'browser_configuration.dart';
 
 class BrowserController extends ChangeNotifier {
   static const String _prefSavedSession = 'pref_saved_browser_session';
@@ -194,6 +195,11 @@ class BrowserController extends ChangeNotifier {
     cur.errorMessage = null;
     cur.url = destination;
     if (cur.webViewController != null) {
+      if (destination.contains('spotify.com')) {
+        cur.webViewController!.setSettings(
+          settings: BrowserConfiguration.buildSettings(cur),
+        );
+      }
       cur.webViewController!.loadUrl(
         urlRequest: URLRequest(url: WebUri(destination)),
       );

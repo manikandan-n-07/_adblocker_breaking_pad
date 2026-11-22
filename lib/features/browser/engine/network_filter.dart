@@ -66,6 +66,40 @@ class NetworkFilter {
       }
     }
 
+    // Layer 1.1b: Spotify Web Player & Anti-Adblock Protection
+    // Protect Spotify first-party playback, tokens, DRM (Widevine), and audio CDN streams!
+    final isSpotifyPage = pageDomain.contains('spotify.com');
+    final isSpotifyHost = requestDomain.contains('spotify.com') ||
+        requestDomain.contains('spotifycdn') ||
+        requestDomain.contains('scdn.co') ||
+        requestDomain.contains('pscdn.co');
+
+    if (isSpotifyPage && isSpotifyHost) {
+      final isSpotifyAdEndpoint = url.contains('/ad-logic/') ||
+          url.contains('/ad-break') ||
+          url.contains('/ads/v1/') ||
+          url.contains('audio-ak-spotify-com.akamaized.net/audio/');
+
+      if (isSpotifyAdEndpoint) {
+        const result = FilterResult(
+          isBlocked: true,
+          category: FilterCategory.ads,
+          ruleMatched: '||spclient.wg.spotify.com/ad-logic/*',
+        );
+        statistics.recordBlockedRequest(
+          url: url,
+          domain: requestDomain,
+          category: FilterCategory.ads,
+          ruleMatched: '||spclient.wg.spotify.com/ad-logic/*',
+        );
+        return result;
+      }
+
+      // CRITICAL: Protect all other Spotify first-party player, DRM (Widevine), token, and CDN calls!
+      // This prevents generic tracker/ad regexes (like /event?, /track?, etc.) from breaking Spotify playback!
+      return FilterResult.allowed;
+    }
+
     // Layer 1.2: General Ads Network domain matching
     if (ruleManager.isAdBlockingEnabled && requestDomain.isNotEmpty) {
       if (AdGuardFilterRules.matchesDomain(requestDomain, ruleManager.adDomains)) {

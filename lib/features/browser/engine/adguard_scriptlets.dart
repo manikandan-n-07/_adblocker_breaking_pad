@@ -236,6 +236,16 @@ class AdGuardScriptlets {
         if (origFetch) {
           window.fetch = function(input, init) {
             const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+            if (url.includes('spotify.com') && (url.includes('ad-logic') || url.includes('/ads/'))) {
+              return Promise.resolve(new Response(JSON.stringify({
+                ad_breaks: [],
+                ads: [],
+                in_ad_break: false
+              }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+              }));
+            }
             if (isBlockedUrl(url)) {
               console.log('[BREAKING PAD] ⛔ Blocked fetch: ' + url);
               return Promise.resolve(new Response('', { status: 200 }));
@@ -536,6 +546,55 @@ class AdGuardScriptlets {
         }
       } catch(e) {}
       ''' : ''}
+
+      // ════════════════════════════════════════════════════════
+      // LAYER 6: Spotify Web Player & Anti-Adblock Evasion
+      // ════════════════════════════════════════════════════════
+      try {
+        const isSpotify = location.hostname.includes('spotify.com');
+        if (isSpotify) {
+          // 6a. Spoof Desktop Environment so Spotify doesn't show "Playback disabled" on mobile
+          try {
+            const desktopUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+            Object.defineProperty(navigator, 'userAgent', { get: function() { return desktopUA; }, configurable: true });
+            Object.defineProperty(navigator, 'appVersion', { get: function() { return '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'; }, configurable: true });
+            Object.defineProperty(navigator, 'platform', { get: function() { return 'Win32'; }, configurable: true });
+            if (navigator.userAgentData) {
+              Object.defineProperty(navigator.userAgentData, 'mobile', { get: function() { return false; }, configurable: true });
+              Object.defineProperty(navigator.userAgentData, 'platform', { get: function() { return 'Windows'; }, configurable: true });
+            }
+          } catch(e) {}
+
+          // 6b. Bypass Anti-Adblock Detection on Spotify
+          try {
+            window.__hasAdBlocker = false;
+            window.isAdBlocked = false;
+          } catch(e) {}
+
+          // 6c. Auto-Skip Spotify Audio Ads (Instant 0.05s skip & mute)
+          setInterval(function() {
+            try {
+              const audio = document.querySelector('audio');
+              const nowPlaying = document.querySelector('[data-testid="now-playing-widget"]');
+              const adLabel = document.querySelector('[data-testid="track-info-advertiser"], [aria-label*="Advertisement"]');
+              const isAdPlaying = adLabel !== null || (nowPlaying && nowPlaying.textContent.toLowerCase().includes('advertisement'));
+
+              if (isAdPlaying && audio) {
+                audio.muted = true;
+                if (isFinite(audio.duration) && audio.duration > 0) {
+                  audio.currentTime = audio.duration;
+                }
+                const skipBtn = document.querySelector('[data-testid="control-button-skip-forward"]');
+                if (skipBtn && !skipBtn.disabled) {
+                  skipBtn.click();
+                }
+              } else if (audio && audio.muted && !isAdPlaying) {
+                audio.muted = false;
+              }
+            } catch(e) {}
+          }, 200);
+        }
+      } catch(e) {}
 
     })();
     ''';
