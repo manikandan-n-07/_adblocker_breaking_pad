@@ -13,6 +13,7 @@ class BrowserTab {
   bool canGoForward;
   InAppWebViewController? webViewController;
   int blockedCount;
+  String? errorMessage;
   final DateTime createdAt;
 
   BrowserTab({
@@ -28,6 +29,7 @@ class BrowserTab {
     this.canGoForward = false,
     this.webViewController,
     this.blockedCount = 0,
+    this.errorMessage,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -44,6 +46,7 @@ class BrowserTab {
     bool? canGoForward,
     InAppWebViewController? webViewController,
     int? blockedCount,
+    String? errorMessage,
   }) {
     final tab = BrowserTab(
       id: id ?? this.id,
@@ -58,6 +61,7 @@ class BrowserTab {
       canGoForward: canGoForward ?? this.canGoForward,
       webViewController: webViewController ?? this.webViewController,
       blockedCount: blockedCount ?? this.blockedCount,
+      errorMessage: errorMessage ?? this.errorMessage,
       createdAt: createdAt,
     );
     return tab;

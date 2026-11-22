@@ -80,6 +80,12 @@ void main() {
 
       final res3 = networkFilter.shouldBlockUrl('https://cdn.taboola.com/libtrc/unip/loader.js');
       expect(res3.isBlocked, isTrue);
+
+      final res4 = networkFilter.shouldBlockUrl('https://ade.clmbtech.com/c/v/123');
+      expect(res4.isBlocked, isTrue);
+
+      final res5 = networkFilter.shouldBlockUrl('https://static.colombiaonline.com/js/colombia.js');
+      expect(res5.isBlocked, isTrue);
     });
 
     test('Blocks known trackers (google-analytics, hotjar, etc.)', () {
@@ -149,6 +155,11 @@ void main() {
       final css = cosmetic.buildCssRules();
       expect(css.contains('.ad-banner'), isTrue);
       expect(css.contains('display: none !important'), isTrue);
+      expect(css.contains('background-image: none !important'), isTrue);
+
+      final cleanupJs = cosmetic.buildCleanupSnippetJs();
+      expect(cleanupJs.contains('display'), isTrue);
+      expect(cleanupJs.contains('advertisement'), isTrue);
     });
 
     test('Builds Document Start Scriptlet with anti-adblock and youtube mitigations', () {

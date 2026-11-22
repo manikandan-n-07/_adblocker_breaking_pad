@@ -24,6 +24,11 @@ class AdGuardScriptlets {
     'hotjar.com', 'clarity.ms', 'mouseflow.com', 'fullstory.com',
     'moatads.com', 'yldbt.com', 'smartclip.net', 'freewheel.tv',
     'videohub.tv', 'undertone.com', 'ad.adfactor.co.in',
+    'colombiaonline.com', 'clmbtech.com', 'ade.clmbtech.com', 'static.clmbtech.com',
+    'tg.indiatimes.com', 'jss.indiatimes.com', 'agi-static.indiatimes.com',
+    'hserver.indiatimes.com', 'adspecs.indiatimes.com', 'tilmads.indiatimes.com',
+    'timesinternet.in', 'affle.com', 'adgyde.com', 'adplus.co.in', 'zedo.com',
+    'tyroo.com', 'adgebra.co.in',
   ];
 
   static String getDocumentStartScript({
@@ -144,6 +149,20 @@ class AdGuardScriptlets {
         window.Criteo.events = window.Criteo.events || { push: function() {} };
         window.criteo_q = window.criteo_q || [];
         window.criteo_q.push = function() {};
+
+        // Neutralize Colombia (CLMB) / Times Internet ad stack
+        window.clmb = window.clmb || {};
+        window.clmb.init = function() {};
+        window.clmb.load = function() {};
+        window.clmb.push = function() {};
+        window.colombia = window.colombia || {};
+        window.colombia.init = function() {};
+        window.colombia.load = function() {};
+        window.colombia.render = function() {};
+        window._clmb = window._clmb || [];
+        window._clmb.push = function() {};
+        window.TimesAd = window.TimesAd || {};
+        window.tilMads = window.tilMads || {};
 
       } catch (e) {}
 

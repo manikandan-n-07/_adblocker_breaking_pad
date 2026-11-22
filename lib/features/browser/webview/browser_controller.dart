@@ -191,6 +191,7 @@ class BrowserController extends ChangeNotifier {
         BrowserConstants.searchEngines['Google']!;
     final destination = UrlHelper.sanitizeOrSearchUrl(trimmed, searchEngineTemplate: template);
 
+    cur.errorMessage = null;
     cur.url = destination;
     if (cur.webViewController != null) {
       cur.webViewController!.loadUrl(
@@ -262,6 +263,16 @@ class BrowserController extends ChangeNotifier {
 
   void incrementTabBlockedCount(BrowserTab tab) {
     tab.blockedCount++;
+    notifyListeners();
+  }
+
+  void setTabError(BrowserTab tab, String? error) {
+    tab.errorMessage = error;
+    notifyListeners();
+  }
+
+  void clearTabError(BrowserTab tab) {
+    tab.errorMessage = null;
     notifyListeners();
   }
 

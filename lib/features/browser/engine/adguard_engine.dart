@@ -113,6 +113,24 @@ class AdGuardEngine extends ChangeNotifier {
     return scripts;
   }
 
+  /// Injects active cosmetic cleanup dynamically into the running WebView page.
+  /// Used during onLoadStart, onProgressChanged, and onLoadStop to guarantee zero ad flash.
+  Future<void> injectCosmeticCleanup(InAppWebViewController controller, {String? domain}) async {
+    if (!ruleManager.isCosmeticFilteringEnabled) return;
+    if (domain != null && ruleManager.isDomainAllowlisted(domain)) return;
+
+    try {
+      final css = cosmeticFilter.buildCssRules(domain: domain);
+      if (css.isNotEmpty) {
+        await controller.injectCSSCode(source: css);
+      }
+      final cleanupJs = cosmeticFilter.buildCleanupSnippetJs(domain: domain);
+      if (cleanupJs.isNotEmpty) {
+        await controller.evaluateJavascript(source: cleanupJs);
+      }
+    } catch (_) {}
+  }
+
   /// Intercepts network requests in Android WebView (shouldInterceptRequest callback).
   /// If the URL is determined to be an ad or tracker, returns an empty 200 HTTP response.
   WebResourceResponse? interceptRequest(WebResourceRequest request, {String? pageUrl}) {

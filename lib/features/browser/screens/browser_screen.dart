@@ -141,72 +141,212 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
     final domain = UrlHelper.extractDomain(tab.url);
 
-    return InAppWebView(
-      key: ValueKey(tab.id),
-      initialUrlRequest: URLRequest(url: WebUri(tab.url)),
-      initialSettings: BrowserConfiguration.buildSettings(tab),
-      initialUserScripts: UnmodifiableListView(
-        AdGuardEngine.instance.getUserScripts(currentDomain: domain),
-      ),
-      onWebViewCreated: (webController) {
-        tab.webViewController = webController;
-      },
-      onLoadStart: (webController, uri) {
-        if (uri != null) {
-          final urlStr = uri.toString();
-          tab.url = urlStr;
-          _controller.updateTabProgress(tab, 0.1);
-          _controller.updateTabUrl(tab, urlStr);
-        }
-      },
-      onProgressChanged: (webController, progress) {
-        _controller.updateTabProgress(tab, progress / 100.0);
-      },
-      onLoadStop: (webController, uri) async {
-        _controller.updateTabProgress(tab, 1.0);
-        if (uri != null) {
-          final title = await webController.getTitle() ?? '';
-          _controller.updateTabTitle(tab, title);
-          _controller.updateTabUrl(tab, uri.toString());
-        }
-      },
-      onTitleChanged: (webController, title) {
-        if (title != null) {
-          _controller.updateTabTitle(tab, title);
-        }
-      },
-      shouldInterceptRequest: (webController, request) async {
-        final response = AdGuardEngine.instance.interceptRequest(request, pageUrl: tab.url);
-        if (response != null) {
-          _controller.incrementTabBlockedCount(tab);
-          return response;
-        }
-        return null;
-      },
-      shouldOverrideUrlLoading: (webController, navigationAction) async {
-        return await BrowserNavigation.handleNavigationAction(webController, navigationAction);
-      },
-      onCreateWindow: (webController, createWindowAction) async {
-        final url = createWindowAction.request.url?.toString();
-        if (url != null && url.isNotEmpty) {
-          _controller.navigate(url);
-          return true;
-        }
-        return false;
-      },
-      onDownloadStartRequest: (webController, downloadRequest) async {
-        final url = downloadRequest.url.toString();
-        final filename = downloadRequest.suggestedFilename;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Starting download: ${filename ?? url}'),
-            backgroundColor: BrowserConstants.surface,
+    return Stack(
+      children: [
+        InAppWebView(
+          key: ValueKey(tab.id),
+          initialUrlRequest: URLRequest(url: WebUri(tab.url)),
+          initialSettings: BrowserConfiguration.buildSettings(tab),
+          initialUserScripts: UnmodifiableListView(
+            AdGuardEngine.instance.getUserScripts(currentDomain: domain),
           ),
-        );
+          onWebViewCreated: (webController) {
+            tab.webViewController = webController;
+          },
+          onLoadStart: (webController, uri) {
+            if (uri != null) {
+              final urlStr = uri.toString();
+              tab.url = urlStr;
+              _controller.clearTabError(tab);
+              _controller.updateTabProgress(tab, 0.1);
+              _controller.updateTabUrl(tab, urlStr);
+            }
+          },
+          onProgressChanged: (webController, progress) {
+            _controller.updateTabProgress(tab, progress / 100.0);
+            if (progress >= 50) {
+              AdGuardEngine.instance.injectCosmeticCleanup(
+                webController,
+                domain: UrlHelper.extractDomain(tab.url),
+              );
+            }
+          },
+          onLoadStop: (webController, uri) async {
+            _controller.updateTabProgress(tab, 1.0);
+            if (uri != null) {
+              final title = await webController.getTitle() ?? '';
+              _controller.updateTabTitle(tab, title);
+              _controller.updateTabUrl(tab, uri.toString());
+            }
+            // Aggressive immediate cleanup to eliminate empty ad containers, labels, and widgets
+            await AdGuardEngine.instance.injectCosmeticCleanup(
+              webController,
+              domain: UrlHelper.extractDomain(uri?.toString() ?? tab.url),
+            );
+          },
+          onReceivedError: (webController, request, error) {
+            if (request.isForMainFrame == true) {
+              _controller.setTabError(tab, error.description);
+            }
+          },
+          onTitleChanged: (webController, title) {
+            if (title != null) {
+              _controller.updateTabTitle(tab, title);
+            }
+          },
+          shouldInterceptRequest: (webController, request) async {
+            final response = AdGuardEngine.instance.interceptRequest(request, pageUrl: tab.url);
+            if (response != null) {
+              _controller.incrementTabBlockedCount(tab);
+              return response;
+            }
+            return null;
+          },
+          shouldOverrideUrlLoading: (webController, navigationAction) async {
+            return await BrowserNavigation.handleNavigationAction(webController, navigationAction);
+          },
+          onCreateWindow: (webController, createWindowAction) async {
+            final url = createWindowAction.request.url?.toString();
+            if (url != null && url.isNotEmpty) {
+              _controller.navigate(url);
+              return true;
+            }
+            return false;
+          },
+          onDownloadStartRequest: (webController, downloadRequest) async {
+            final url = downloadRequest.url.toString();
+            final filename = downloadRequest.suggestedFilename;
 
-        await DownloadService.instance.startDownload(url, suggestedFilename: filename);
-      },
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Starting download: ${filename ?? url}'),
+                backgroundColor: BrowserConstants.surface,
+              ),
+            );
+
+            await DownloadService.instance.startDownload(url, suggestedFilename: filename);
+          },
+        ),
+        if (tab.errorMessage != null)
+          _buildErrorView(tab),
+      ],
+    );
+  }
+
+  Widget _buildErrorView(BrowserTab tab) {
+    final isDnsOrOffline = (tab.errorMessage ?? '').contains('ERR_NAME_NOT_RESOLVED') ||
+        (tab.errorMessage ?? '').contains('ERR_INTERNET_DISCONNECTED') ||
+        (tab.errorMessage ?? '').contains('ERR_CONNECTION');
+
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: BrowserConstants.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white24, width: 2.0),
+                ),
+                child: const Icon(
+                  Icons.wifi_off_rounded,
+                  size: 36,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Unable to Connect',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                tab.url,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white38,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Text(
+                  tab.errorMessage ?? 'Network request failed',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isDnsOrOffline
+                    ? 'Check your device internet or emulator DNS settings.'
+                    : 'The server may be down or unreachable.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      _controller.clearTabError(tab);
+                      _controller.navigate(_controller.homepage);
+                    },
+                    icon: const Icon(Icons.home_outlined, size: 18, color: Colors.white70),
+                    label: const Text('Home', style: TextStyle(color: Colors.white70)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.white24),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      _controller.clearTabError(tab);
+                      tab.webViewController?.reload();
+                    },
+                    icon: const Icon(Icons.refresh_rounded, size: 18, color: Colors.black),
+                    label: const Text('Try Again', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
