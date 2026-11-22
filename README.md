@@ -1,6 +1,6 @@
 # 🛡️ BREAKING PAD Browser
 
-**BREAKING PAD Browser** is a privacy-first mobile web browser built with Flutter, powered by a local, standalone **AdGuard-style multi-layer ad-blocking engine**. Designed with a high-contrast monochrome (Black & White) aesthetic, it delivers speed, zero tracking, and local security without relying on any external backend or cloud proxy.
+**BREAKING PAD Browser** is a privacy-first mobile web browser built with Flutter, powered by a local, standalone **AdGuard-style multi-layer ad-blocking engine**. Designed with a high-contrast monochrome (Black & White) aesthetic, it delivers speed, zero tracking, and local security without relying on any external backend or clouds proxy.
 
 ---
 
