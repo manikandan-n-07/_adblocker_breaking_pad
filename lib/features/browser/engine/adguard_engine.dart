@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'adguard_scriptlets.dart';
@@ -67,6 +68,7 @@ class AdGuardEngine extends ChangeNotifier {
     // Cosmetic filtering: inject CSS stylesheet dynamically
     final css = cosmeticFilter.buildCssRules(domain: currentDomain);
     if (css.isNotEmpty) {
+      final encodedCss = jsonEncode(css);
       final cssInjectionJs = '''
         (function() {
           function addAdBlockStyle() {
@@ -74,17 +76,15 @@ class AdGuardEngine extends ChangeNotifier {
             const style = document.createElement('style');
             style.id = '__breaking_pad_adblock_css';
             style.type = 'text/css';
-            style.appendChild(document.createTextNode(`$css`));
-            if (document.head) {
-              document.head.appendChild(style);
-            } else if (document.documentElement) {
-              document.documentElement.appendChild(style);
+            style.textContent = $encodedCss;
+            const target = document.head || document.documentElement;
+            if (target) {
+              target.appendChild(style);
             }
           }
+          addAdBlockStyle();
           if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', addAdBlockStyle);
-          } else {
-            addAdBlockStyle();
           }
         })();
       ''';

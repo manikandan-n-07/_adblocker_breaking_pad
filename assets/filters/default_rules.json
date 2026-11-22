@@ -159,6 +159,18 @@
     "[class*=\"advertisement-container\"]","[class*=\"advertisment-container\"]",
     "[class*=\"skin-ad\"]","[class*=\"skin_ad\"]","[class*=\"wallpaper-ad\"]","[class*=\"wallpaper_ad\"]",
     "[id*=\"skin_ad\"]","[id*=\"wallpaper\"]","[class*=\"gutter-ad\"]","[class*=\"gutter_ad\"]",
-    ".gutter-ad-left",".gutter-ad-right","[class*=\"ad-gutter\"]"
+    ".gutter-ad-left",".gutter-ad-right","[class*=\"ad-gutter\"]",
+    ".paisa-wrapper",".main-paisa","[class*=\"paisa\"]","[id*=\"paisa\"]",
+    ".topBand_adwrapper","[class*=\"topBand\"]","[class*=\"adwrapper\"]",
+    "[class*=\"ad_wrapper\"]","[class*=\"ad-wrapper\"]","[class*=\"adbox\"]",
+    "[class*=\"ad-box\"]","[class*=\"ad_box\"]","[class*=\"adslot\"]",
+    "[class*=\"ad-slot\"]","[class*=\"ad_slot\"]","[class*=\"adunit\"]",
+    "[class*=\"ad-unit\"]","[class*=\"ad_unit\"]","[class*=\"adholder\"]",
+    "[class*=\"ad-holder\"]","[class*=\"ad_holder\"]","[class*=\"adspace\"]",
+    "[class*=\"ad-space\"]","[class*=\"ad_space\"]","[class*=\"adstrip\"]",
+    "[class*=\"ad-strip\"]","[class*=\"ad_strip\"]","[class*=\"adsection\"]",
+    "[class*=\"ad-section\"]","[class*=\"ad_section\"]",".adInv",".appgutter",
+    "[id*=\"appgutter\"]","[data-slot=\"ad\"]","[data-ad=\"true\"]",
+    "[class*=\"contentwrapper\"] [class*=\"ad\"]"
   ]
 }

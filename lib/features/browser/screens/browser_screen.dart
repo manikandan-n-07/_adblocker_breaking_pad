@@ -185,6 +185,15 @@ class _BrowserScreenState extends State<BrowserScreen> {
               webController,
               domain: UrlHelper.extractDomain(uri?.toString() ?? tab.url),
             );
+            // Secondary cleanup to catch lazy/React hydrated ad placeholders
+            Future.delayed(const Duration(milliseconds: 800), () {
+              if (mounted) {
+                AdGuardEngine.instance.injectCosmeticCleanup(
+                  webController,
+                  domain: UrlHelper.extractDomain(tab.url),
+                );
+              }
+            });
           },
           onReceivedError: (webController, request, error) {
             if (request.isForMainFrame == true) {

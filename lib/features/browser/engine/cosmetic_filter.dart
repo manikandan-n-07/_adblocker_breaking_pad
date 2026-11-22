@@ -16,6 +16,9 @@ class CosmeticFilter {
     final joined = selectors.join(', ');
     return '''
       $joined,
+      .paisa-wrapper, .main-paisa, [class*="paisa"], [id*="paisa"],
+      .topBand_adwrapper, [class*="topBand"], [class*="adwrapper"], [class*="ad_wrapper"], [class*="ad-wrapper"],
+      .adInv, .appgutter, [id*="appgutter"], [data-ua-type],
       [class*="ad-placeholder"], [class*="ad_placeholder"], [class*="adPlaceholder"],
       [class*="adv-container"], [class*="adv_container"], [class*="adv-wrapper"], [class*="adv_wrapper"],
       [class*="adv-box"], [class*="adv_box"],
@@ -24,7 +27,19 @@ class CosmeticFilter {
       [class*="colombia"], [class*="clmb"], [id*="colombia"], [id*="clmb"], [data-clmb-id],
       [class*="gutter-ad"], [class*="gutter_ad"], .gutter-ad-left, .gutter-ad-right, [class*="ad-gutter"],
       [class*="skin-ad"], [class*="skin_ad"], [class*="wallpaper-ad"], [class*="wallpaper_ad"],
-      [id*="skin_ad"], [id*="wallpaper"], [id*="gutter"] {
+      [id*="skin_ad"], [id*="wallpaper"], [id*="gutter"],
+      [class*="ad-holder"], [class*="ad_holder"], [class*="adHolder"],
+      [class*="ad-section"], [class*="ad_section"], [class*="adSection"],
+      [class*="ad-space"], [class*="ad_space"], [class*="adSpace"],
+      [class*="ad-strip"], [class*="ad_strip"], [class*="adStrip"],
+      [class*="ad-unit"], [class*="ad_unit"], [class*="adUnit"],
+      [class*="ad-slot"], [class*="ad_slot"], [class*="adSlot"],
+      [class*="ad-box"], [class*="ad_box"], [class*="adBox"],
+      [class*="ad-frame"], [class*="ad_frame"], [class*="adFrame"],
+      [class*="ad-banner"], [class*="ad_banner"], [class*="adBanner"],
+      [class*="ad-flex"], [class*="ad_flex"],
+      [class*="advertisement"], [class*="advertisment"],
+      [id*="div-gpt-ad"], [id*="gpt-ad"], [data-ad-slot], [data-ad-unit], [data-slot="ad"] {
         display: none !important;
         height: 0 !important;
         min-height: 0 !important;
@@ -40,16 +55,53 @@ class CosmeticFilter {
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;
+        line-height: 0 !important;
+        font-size: 0 !important;
       }
 
-      /* Collapse empty ad containers that left whitespace */
+      /* Strip pseudo-element ad labels like .paisa-wrapper:before { content: "advertisement" } */
+      .paisa-wrapper:before, .paisa-wrapper:after,
+      [class*="paisa"]:before, [class*="paisa"]:after,
+      .topBand_adwrapper:before, .topBand_adwrapper:after,
+      [class*="adwrapper"]:before, [class*="adwrapper"]:after,
+      [class*="ad-wrapper"]:before, [class*="ad-wrapper"]:after,
+      [class*="ad_wrapper"]:before, [class*="ad_wrapper"]:after,
+      [class*="advertisement"]:before, [class*="advertisement"]:after,
+      [class*="ad-box"]:before, [class*="ad-box"]:after,
+      [class*="ad-slot"]:before, [class*="ad-slot"]:after {
+        content: none !important;
+        display: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        visibility: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Collapse empty ad containers with inline styling */
+      .paisa-wrapper[style],
+      .main-paisa[style],
+      [class*="paisa"][style],
+      [class*="adwrapper"][style],
+      [class*="ad-wrapper"][style],
+      [class*="ad_wrapper"][style],
+      [class*="ad-box"][style],
+      [class*="ad-slot"][style],
+      [class*="ad-unit"][style],
+      [class*="topBand"][style],
+      .topBand_adwrapper[style],
       .adsbygoogle[style],
       ins.adsbygoogle[style],
       [id^="div-gpt-ad"][style],
-      [data-ad-slot][style] {
+      [data-ad-slot][style],
+      [data-slot="ad"][style] {
         display: none !important;
         height: 0 !important;
         min-height: 0 !important;
+        max-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
       }
 
       /* Strip background wallpaper / takeover ads */
@@ -85,6 +137,7 @@ class CosmeticFilter {
           el.style.setProperty('pointer-events', 'none', 'important');
           el.style.setProperty('margin', '0px', 'important');
           el.style.setProperty('padding', '0px', 'important');
+          el.style.setProperty('border', 'none', 'important');
         }
 
         function cleanAds(root) {
@@ -94,7 +147,16 @@ class CosmeticFilter {
             const matches = root.querySelectorAll(selectorQuery);
             for (let i = 0; i < matches.length; i++) hideEl(matches[i]);
 
-            // 2. Hide iframes used for ads (by src patterns)
+            // 2. Extra ad & paisa specific queries
+            const extraAdWrappers = root.querySelectorAll('.paisa-wrapper, .main-paisa, [class*="paisa" i], [id*="paisa" i], .topBand_adwrapper, [class*="topBand" i], .adInv, .appgutter, [class*="adwrapper" i], [class*="ad-wrapper" i], [class*="ad_wrapper" i], [class*="adbox" i], [class*="ad-box" i], [class*="ad_box" i], [class*="adslot" i], [class*="ad-slot" i], [class*="ad_slot" i], [class*="adunit" i], [class*="ad-unit" i], [class*="adholder" i], [class*="ad-holder" i]');
+            for (let i = 0; i < extraAdWrappers.length; i++) {
+              hideEl(extraAdWrappers[i]);
+              if (extraAdWrappers[i].parentElement && (extraAdWrappers[i].parentElement.children.length === 1 || (extraAdWrappers[i].parentElement.className && extraAdWrappers[i].parentElement.className.toLowerCase().includes('paisa')))) {
+                hideEl(extraAdWrappers[i].parentElement);
+              }
+            }
+
+            // 3. Hide iframes used for ads (by src patterns)
             const iframes = root.querySelectorAll('iframe[src*="doubleclick"], iframe[src*="googlesyndication"], iframe[src*="adservice"], iframe[src*="ads"], iframe[src*="adnxs"], iframe[src*="taboola"], iframe[src*="outbrain"], iframe[src*="clmb"], iframe[src*="colombia"]');
             for (let f of iframes) {
               hideEl(f);
@@ -103,30 +165,58 @@ class CosmeticFilter {
               }
             }
 
-            // 3. Purge Ad Text Nodes (COLLAPSE "Advertisement", "Sponsored", etc.)
-            // Directly eliminates empty whitespace boxes with "Advertisement" centered inside
-            const textNodes = root.querySelectorAll('div, span, p, label, b, em, strong, a');
-            const AD_TEXTS = ['advertisement', 'sponsored', 'promoted', 'ads by google'];
+            // 4. Purge Elements with "Advertisement" / "Sponsored" (both in DOM text and in CSS ::before / ::after)
+            const textNodes = root.querySelectorAll('div, span, p, label, b, em, strong, a, section, aside');
+            const AD_KEYWORDS = ['advertisement', 'sponsored', 'promoted', 'ads by google'];
             for (let el of textNodes) {
-              if (!el || !el.textContent) continue;
-              const txt = el.textContent.trim().toLowerCase();
-              if (AD_TEXTS.includes(txt) || (txt.startsWith('advertisement') && txt.length < 25)) {
-                // Find parent ad wrapper (walk up to 4 parents)
+              if (!el) continue;
+              const txt = (el.textContent || '').trim().toLowerCase();
+              let isAdLabel = AD_KEYWORDS.includes(txt) || (txt.startsWith('advertisement') && txt.length < 25);
+
+              if (!isAdLabel) {
+                try {
+                  const bContent = window.getComputedStyle(el, '::before').getPropertyValue('content');
+                  if (bContent && (bContent.toLowerCase().includes('advertisement') || bContent.toLowerCase().includes('sponsored'))) {
+                    isAdLabel = true;
+                  }
+                } catch(e) {}
+              }
+
+              if (isAdLabel) {
+                hideEl(el);
                 let curr = el;
                 for (let d = 0; d < 4; d++) {
                   if (!curr.parentElement || curr.parentElement === document.body || curr.parentElement === document.documentElement) break;
                   curr = curr.parentElement;
-                  const pHeight = parseInt(window.getComputedStyle(curr).minHeight) || 0;
-                  const hasAdClass = /(?:^|[\\s_-])(?:ad|adv|advertisement|banner|slot|wrapper|container|box|placeholder)(?:[\\s_-]|\$)/i.test(curr.className || '') || /(?:^|[\\s_-])(?:ad|adv|advertisement|slot|placeholder)(?:[\\s_-]|\$)/i.test(curr.id || '');
-                  if (pHeight > 40 || hasAdClass || curr.children.length <= 3) {
+                  const pHeight = parseInt(window.getComputedStyle(curr).minHeight) || parseInt(curr.style.minHeight) || parseInt(curr.style.height) || 0;
+                  const pCls = (curr.className || '').toLowerCase();
+                  const pId = (curr.id || '').toLowerCase();
+                  const hasAdIndicator = pCls.includes('ad') || pCls.includes('paisa') || pCls.includes('banner') || pCls.includes('slot') || pCls.includes('wrapper') || pId.includes('ad') || pId.includes('paisa') || curr.children.length <= 2;
+                  if (pHeight > 30 || hasAdIndicator) {
                     hideEl(curr);
                   }
                 }
-                hideEl(el);
               }
             }
 
-            // 4. Purge Loan Badges & Corner widgets ("INSTANT LOAN", etc.)
+            // 5. Collapse empty / blank ad placeholder containers
+            const containers = root.querySelectorAll('div, section, aside');
+            for (let el of containers) {
+              const cls = (typeof el.className === 'string' ? el.className : '').toLowerCase();
+              const id = (el.id || '').toLowerCase();
+              if (cls.includes('paisa') || cls.includes('ad-') || cls.includes('ad_') || cls.includes('adv_') || cls.includes('adbox') || cls.includes('adslot') || cls.includes('adwrapper') || id.includes('gpt-ad') || id.includes('dfp')) {
+                const innerTxt = (el.innerText || el.textContent || '').trim().replace(/advertisement|sponsored|promoted/ig, '').trim();
+                const hasImg = el.querySelector('img:not([width="1"]):not([height="1"])');
+                if (!hasImg && innerTxt.length === 0) {
+                  hideEl(el);
+                  if (el.parentElement && (el.parentElement.children.length === 1 || el.parentElement.className.toLowerCase().includes('paisa'))) {
+                    hideEl(el.parentElement);
+                  }
+                }
+              }
+            }
+
+            // 6. Purge Loan Badges & Corner widgets ("INSTANT LOAN", etc.)
             const loanEls = root.querySelectorAll('[class*="loan" i], [id*="loan" i], [class*="instant" i], a[href*="loan" i]');
             for (let el of loanEls) {
               const txt = (el.textContent || '').trim().toLowerCase();
@@ -139,7 +229,7 @@ class CosmeticFilter {
               }
             }
 
-            // 5. Remove Wallpaper / Takeover Background Ads
+            // 7. Remove Wallpaper / Takeover Background Ads
             if (document.body) {
               const bodyBg = window.getComputedStyle(document.body).backgroundImage;
               if (bodyBg && bodyBg !== 'none') {
@@ -153,7 +243,7 @@ class CosmeticFilter {
               }
             }
 
-            // 6. Sticky bottom / floating ads
+            // 8. Sticky bottom / floating ads
             const stickyEls = root.querySelectorAll('[class*="sticky-ad"], [class*="sticky_ad"], [class*="bottom-ad"], [class*="bottom_ad"], [class*="fixed-ad"], [class*="float-ad"], [class*="floating-ad"], [id*="sticky-ad"], [id*="float-ad"]');
             for (let el of stickyEls) hideEl(el);
 
@@ -206,7 +296,25 @@ class CosmeticFilter {
     return '''
       (function() {
         try {
+          function hideEl(el) {
+            if (!el) return;
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('height', '0px', 'important');
+            el.style.setProperty('min-height', '0px', 'important');
+            el.style.setProperty('max-height', '0px', 'important');
+            el.style.setProperty('visibility', 'hidden', 'important');
+            el.style.setProperty('overflow', 'hidden', 'important');
+            el.style.setProperty('margin', '0px', 'important');
+            el.style.setProperty('padding', '0px', 'important');
+          }
+
           const adSelectors = [
+            '.paisa-wrapper', '.main-paisa', '[class*="paisa" i]', '[id*="paisa" i]',
+            '.topBand_adwrapper', '[class*="topBand" i]', '.adInv', '.appgutter',
+            '[class*="adwrapper" i]', '[class*="ad-wrapper" i]', '[class*="ad_wrapper" i]',
+            '[class*="adbox" i]', '[class*="ad-box" i]', '[class*="ad_box" i]',
+            '[class*="adslot" i]', '[class*="ad-slot" i]', '[class*="ad_slot" i]',
+            '[class*="adunit" i]', '[class*="ad-unit" i]', '[class*="adholder" i]',
             '.adsbygoogle', 'ins.adsbygoogle', '[id^="div-gpt-ad"]', '[data-ad-slot]',
             '[class*="ad-placeholder"]', '[class*="ad_placeholder"]', '[class*="advertisement-container"]',
             '[class*="colombia"]', '[class*="clmb"]', '[id*="colombia"]', '[id*="clmb"]',
@@ -215,24 +323,33 @@ class CosmeticFilter {
           ];
           const matches = document.querySelectorAll(adSelectors.join(','));
           for (let i = 0; i < matches.length; i++) {
-            const el = matches[i];
-            el.style.setProperty('display', 'none', 'important');
-            el.style.setProperty('height', '0px', 'important');
-            el.style.setProperty('min-height', '0px', 'important');
+            hideEl(matches[i]);
+            if (matches[i].parentElement && (matches[i].parentElement.children.length === 1 || (matches[i].parentElement.className && matches[i].parentElement.className.toLowerCase().includes('paisa')))) {
+              hideEl(matches[i].parentElement);
+            }
           }
 
-          // Collapse parent wrappers with text "Advertisement"
-          const allText = document.querySelectorAll('div, span, p');
+          // Collapse parent wrappers with text "Advertisement" or ::before "advertisement"
+          const allText = document.querySelectorAll('div, span, p, label, b, strong, section, aside');
           for (let el of allText) {
             const txt = (el.textContent || '').trim().toLowerCase();
-            if (txt === 'advertisement' || txt === 'sponsored') {
-              let p = el.parentElement;
-              if (p && p !== document.body) {
-                p.style.setProperty('display', 'none', 'important');
-                p.style.setProperty('min-height', '0px', 'important');
-                p.style.setProperty('height', '0px', 'important');
+            let isAd = (txt === 'advertisement' || txt === 'sponsored' || txt === 'promoted' || (txt.startsWith('advertisement') && txt.length < 25));
+            if (!isAd) {
+              try {
+                const bContent = window.getComputedStyle(el, '::before').getPropertyValue('content');
+                if (bContent && (bContent.toLowerCase().includes('advertisement') || bContent.toLowerCase().includes('sponsored'))) {
+                  isAd = true;
+                }
+              } catch(e) {}
+            }
+            if (isAd) {
+              hideEl(el);
+              let curr = el;
+              for (let d = 0; d < 4; d++) {
+                if (!curr.parentElement || curr.parentElement === document.body) break;
+                curr = curr.parentElement;
+                hideEl(curr);
               }
-              el.style.setProperty('display', 'none', 'important');
             }
           }
 
@@ -438,6 +555,41 @@ class CosmeticFilter {
       '[class*="ad-gutter"]',
 
       // Additional TOI / Indian news
+      '.paisa-wrapper',
+      '.main-paisa',
+      '[class*="paisa"]',
+      '[id*="paisa"]',
+      '.topBand_adwrapper',
+      '[class*="topBand"]',
+      '[class*="adwrapper"]',
+      '[class*="ad_wrapper"]',
+      '[class*="ad-wrapper"]',
+      '[class*="adbox"]',
+      '[class*="ad-box"]',
+      '[class*="ad_box"]',
+      '[class*="adslot"]',
+      '[class*="ad-slot"]',
+      '[class*="ad_slot"]',
+      '[class*="adunit"]',
+      '[class*="ad-unit"]',
+      '[class*="ad_unit"]',
+      '[class*="adholder"]',
+      '[class*="ad-holder"]',
+      '[class*="ad_holder"]',
+      '[class*="adspace"]',
+      '[class*="ad-space"]',
+      '[class*="ad_space"]',
+      '[class*="adstrip"]',
+      '[class*="ad-strip"]',
+      '[class*="ad_strip"]',
+      '[class*="adsection"]',
+      '[class*="ad-section"]',
+      '[class*="ad_section"]',
+      '.adInv',
+      '.appgutter',
+      '[id*="appgutter"]',
+      '[data-slot="ad"]',
+      '[data-ad="true"]',
       '.toi-ad',
       '.toi_ad',
       '[id*="toi-ad"]',
