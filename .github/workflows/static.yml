@@ -35,7 +35,8 @@ jobs:
 
       - name: Build Web Static Pages
         run: |
-          flutter build web --release --base-href ./
+          REPO_NAME="${{ github.event.repository.name || '_adblocker_breaking_pad' }}"
+          flutter build web --release --base-href "/${REPO_NAME}/"
           touch build/web/.nojekyll
 
       - name: Setup Pages

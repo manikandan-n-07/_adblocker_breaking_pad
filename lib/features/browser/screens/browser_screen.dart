@@ -1,6 +1,8 @@
 import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+
 import '../engine/adguard_engine.dart';
 import '../models/browser_tab.dart';
 import '../services/download_service.dart';
@@ -195,7 +197,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
             }
           },
           shouldInterceptRequest: (webController, request) async {
-            final response = AdGuardEngine.instance.interceptRequest(request, pageUrl: tab.url);
+            final response = AdGuardEngine.instance.interceptRequest(
+              request,
+              pageUrl: tab.url,
+            );
             if (response != null) {
               _controller.incrementTabBlockedCount(tab);
               return response;
@@ -203,7 +208,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
             return null;
           },
           shouldOverrideUrlLoading: (webController, navigationAction) async {
-            return await BrowserNavigation.handleNavigationAction(webController, navigationAction);
+            return await BrowserNavigation.handleNavigationAction(
+              webController,
+              navigationAction,
+            );
           },
           onCreateWindow: (webController, createWindowAction) async {
             final url = createWindowAction.request.url?.toString();
@@ -224,17 +232,20 @@ class _BrowserScreenState extends State<BrowserScreen> {
               ),
             );
 
-            await DownloadService.instance.startDownload(url, suggestedFilename: filename);
+            await DownloadService.instance.startDownload(
+              url,
+              suggestedFilename: filename,
+            );
           },
         ),
-        if (tab.errorMessage != null)
-          _buildErrorView(tab),
+        if (tab.errorMessage != null) _buildErrorView(tab),
       ],
     );
   }
 
   Widget _buildErrorView(BrowserTab tab) {
-    final isDnsOrOffline = (tab.errorMessage ?? '').contains('ERR_NAME_NOT_RESOLVED') ||
+    final isDnsOrOffline =
+        (tab.errorMessage ?? '').contains('ERR_NAME_NOT_RESOLVED') ||
         (tab.errorMessage ?? '').contains('ERR_INTERNET_DISCONNECTED') ||
         (tab.errorMessage ?? '').contains('ERR_CONNECTION');
 
@@ -276,14 +287,14 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white38,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.white38, fontSize: 13),
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E1E1E),
                   borderRadius: BorderRadius.circular(8),
@@ -305,10 +316,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     ? 'Check your device internet or emulator DNS settings.'
                     : 'The server may be down or unreachable.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.white54, fontSize: 13),
               ),
               const SizedBox(height: 28),
               Row(
@@ -319,12 +327,24 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       _controller.clearTabError(tab);
                       _controller.navigate(_controller.homepage);
                     },
-                    icon: const Icon(Icons.home_outlined, size: 18, color: Colors.white70),
-                    label: const Text('Home', style: TextStyle(color: Colors.white70)),
+                    icon: const Icon(
+                      Icons.home_outlined,
+                      size: 18,
+                      color: Colors.white70,
+                    ),
+                    label: const Text(
+                      'Home',
+                      style: TextStyle(color: Colors.white70),
+                    ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.white24),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -333,12 +353,27 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       _controller.clearTabError(tab);
                       tab.webViewController?.reload();
                     },
-                    icon: const Icon(Icons.refresh_rounded, size: 18, color: Colors.black),
-                    label: const Text('Try Again', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      size: 18,
+                      color: Colors.black,
+                    ),
+                    label: const Text(
+                      'Try Again',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ],
@@ -369,7 +404,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
                   border: Border.all(color: Colors.white, width: 2.0),
                 ),
                 child: Icon(
-                  tab.isIncognito ? Icons.visibility_off : Icons.shield_outlined,
+                  tab.isIncognito
+                      ? Icons.visibility_off
+                      : Icons.shield_outlined,
                   size: 38,
                   color: Colors.white,
                 ),
@@ -377,7 +414,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
               const SizedBox(height: 18),
 
               Text(
-                tab.isIncognito ? 'PRIVATE BROWSING' : BrowserConstants.appFullName,
+                tab.isIncognito
+                    ? 'PRIVATE BROWSING'
+                    : BrowserConstants.appFullName,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -404,7 +443,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 decoration: BoxDecoration(
                   color: BrowserConstants.surface,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: BrowserConstants.borderLight, width: 1.2),
+                  border: Border.all(
+                    color: BrowserConstants.borderLight,
+                    width: 1.2,
+                  ),
                 ),
                 child: TextField(
                   controller: _homeSearchController,
@@ -412,10 +454,20 @@ class _BrowserScreenState extends State<BrowserScreen> {
                   textInputAction: TextInputAction.go,
                   decoration: InputDecoration(
                     hintText: 'Search or enter website address',
-                    hintStyle: const TextStyle(color: BrowserConstants.textSecondary),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white, size: 20),
+                    hintStyle: const TextStyle(
+                      color: BrowserConstants.textSecondary,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                      icon: const Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                       onPressed: () {
                         final text = _homeSearchController.text.trim();
                         if (text.isNotEmpty) {
@@ -425,7 +477,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                       },
                     ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                   onSubmitted: (text) {
                     final trimmed = text.trim();
@@ -445,12 +500,36 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 runSpacing: 16,
                 alignment: WrapAlignment.center,
                 children: [
-                  _buildSpeedDial('Google', 'https://www.google.com', Icons.search),
-                  _buildSpeedDial('YouTube', 'https://www.youtube.com', Icons.play_arrow),
-                  _buildSpeedDial('Wikipedia', 'https://www.wikipedia.org', Icons.menu_book),
-                  _buildSpeedDial('Reddit', 'https://www.reddit.com', Icons.forum),
-                  _buildSpeedDial('GitHub', 'https://www.github.com', Icons.code),
-                  _buildSpeedDial('News', 'https://news.google.com', Icons.newspaper),
+                  _buildSpeedDial(
+                    'Google',
+                    'https://www.google.com',
+                    Icons.search,
+                  ),
+                  _buildSpeedDial(
+                    'YouTube',
+                    'https://www.youtube.com',
+                    Icons.play_arrow,
+                  ),
+                  _buildSpeedDial(
+                    'Wikipedia',
+                    'https://www.wikipedia.org',
+                    Icons.menu_book,
+                  ),
+                  _buildSpeedDial(
+                    'Reddit',
+                    'https://www.reddit.com',
+                    Icons.forum,
+                  ),
+                  _buildSpeedDial(
+                    'GitHub',
+                    'https://www.github.com',
+                    Icons.code,
+                  ),
+                  _buildSpeedDial(
+                    'News',
+                    'https://news.google.com',
+                    Icons.newspaper,
+                  ),
                 ],
               ),
 
@@ -460,9 +539,13 @@ class _BrowserScreenState extends State<BrowserScreen> {
               ListenableBuilder(
                 listenable: AdGuardEngine.instance,
                 builder: (context, _) {
-                  final totalBlocked = AdGuardEngine.instance.statistics.totalBlocked;
+                  final totalBlocked =
+                      AdGuardEngine.instance.statistics.totalBlocked;
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: BrowserConstants.surface,
                       borderRadius: BorderRadius.circular(20),
@@ -471,7 +554,11 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.security, color: Colors.white, size: 16),
+                        const Icon(
+                          Icons.security,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           '$totalBlocked Threats & Ads Blocked Locally',
@@ -508,14 +595,21 @@ class _BrowserScreenState extends State<BrowserScreen> {
               decoration: BoxDecoration(
                 color: BrowserConstants.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: BrowserConstants.borderLight, width: 1.2),
+                border: Border.all(
+                  color: BrowserConstants.borderLight,
+                  width: 1.2,
+                ),
               ),
               child: Icon(icon, color: Colors.white, size: 22),
             ),
             const SizedBox(height: 6),
             Text(
               name,
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

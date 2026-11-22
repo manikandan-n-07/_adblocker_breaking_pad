@@ -32,14 +32,24 @@
         "yldbt.com","smartclip.net","undertone.com","adkernel.com","vidoomy.com",
         "bidtheatre.com","stickyadstv.com","freewheel.tv","lotame.com",
         "mopub.com","millennial-media.com","mobvista.com","smaato.net",
-        "startapp.com","tapjoy.com","flurry.com","madvertise.de","tpc.googlesyndication.com"
+        "startapp.com","tapjoy.com","flurry.com","madvertise.de","tpc.googlesyndication.com",
+        "colombiaonline.com","clmbtech.com","ade.clmbtech.com","static.clmbtech.com",
+        "tg.indiatimes.com","jss.indiatimes.com","agi-static.indiatimes.com",
+        "hserver.indiatimes.com","adspecs.indiatimes.com","mytimes.indiatimes.com",
+        "etp.indiatimes.com","tilmads.indiatimes.com","timesinternet.in",
+        "ad.timesinternet.in","affle.com","adgyde.com","adplus.co.in",
+        "zedo.com","tyroo.com","adgebra.co.in","adtarget.me",
+        "silverpush.co","pokkt.com","greedygame.com","revx.io","vizury.com"
       ],
       "urlPatterns": [
         "*/pagead/*","*/adservice/*","*/ads/banners/*","*banner*ad*",
         "*popunder*","*popupad*","*/affiliate/*","*/adzone/*","*/adsense/*",
         "*/adframe/*","*/adscript/*","*/adloader/*","*/native-ad/*",
         "*/sponsored/*","*/promo-banner/*","*/adtrk*","*/imp.php*",
-        "*/banner.php*","*/ad.php*","*/track.php*","*/click.php*"
+        "*/banner.php*","*/ad.php*","*/track.php*","*/click.php*",
+        "*/clmb/*","*/colombia/*","*/instant-loan*","*/loan-widget*",
+        "*/loan_widget*","*/ads.indiatimes.com/*","*tilmads*",
+        "*/advertisement/*","*/ad_slot/*","*/ad-slot/*"
       ]
     },
     "trackers": {
@@ -141,6 +151,14 @@
     "[class*=\"corner-widget\"]","[class*=\"lead-form\"]",
     ".sponsored-content",".native-ad",".promoted-content",
     ".toi-ad",".nav-ad",".topbar-ad",".header-ad",".footer-ad",
-    ".ad-300x250",".ad-728x90",".ad-320x50",".ad-160x600"
+    ".ad-300x250",".ad-728x90",".ad-320x50",".ad-160x600",
+    "[class*=\"colombia\"]","[class*=\"clmb\"]","[id*=\"colombia\"]","[id*=\"clmb\"]","[data-clmb-id]",
+    "[class*=\"instant-loan\"]","[class*=\"instantLoan\"]","[class*=\"instant_loan\"]","[class*=\"loan-widget\"]","[class*=\"widget-loan\"]",
+    "[class*=\"adv-container\"]","[class*=\"adv_container\"]","[class*=\"adv-wrapper\"]","[class*=\"adv_wrapper\"]",
+    "[class*=\"adv-box\"]","[class*=\"adv_box\"]","[class*=\"ad-placeholder\"]","[class*=\"ad_placeholder\"]","[class*=\"adPlaceholder\"]",
+    "[class*=\"advertisement-container\"]","[class*=\"advertisment-container\"]",
+    "[class*=\"skin-ad\"]","[class*=\"skin_ad\"]","[class*=\"wallpaper-ad\"]","[class*=\"wallpaper_ad\"]",
+    "[id*=\"skin_ad\"]","[id*=\"wallpaper\"]","[class*=\"gutter-ad\"]","[class*=\"gutter_ad\"]",
+    ".gutter-ad-left",".gutter-ad-right","[class*=\"ad-gutter\"]"
   ]
 }
